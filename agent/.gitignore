@@ -14,3 +14,7 @@ __pycache__/
 
 # Environment
 .env
+
+gcal_credentials.json
+gcal_token.json
+taskmaster_config.json
