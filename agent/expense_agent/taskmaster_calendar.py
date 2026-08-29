@@ -32,6 +32,13 @@ from googleapiclient.discovery import build
 
 from .canvas_poller import assignments_to_tasks
 from .onboarding import load_config
+from .task_list import write_task_list
+
+try:
+    from .syllabus import difficulty_multipliers
+except Exception:  # syllabus analysis is optional
+    def difficulty_multipliers() -> dict:
+        return {}
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -69,6 +76,48 @@ def _pick_color(task, cfg, due_local: dt.datetime) -> str:
     if days_out <= 14:
         return COLOR_UPCOMING
     return COLOR_LATER
+
+
+def _consent_prompt() -> bool:
+    """Explain what we're about to do and let the user decline.
+
+    An agent that writes to your calendar should say so plainly before it asks
+    for access, not just throw an OAuth window at you.
+    """
+    if os.path.exists(TOKEN_FILE):
+        return True  # already authorized; don't nag on every run
+
+    print("\n" + "=" * 70)
+    print("  CALENDAR ACCESS")
+    print("=" * 70)
+    print("""
+  To schedule your work, I need permission to use Google Calendar.
+
+  What I will do:
+    - Create a SEPARATE calendar called "Taskmaster"
+    - Put work blocks only on that calendar
+    - Rebuild those blocks when your priorities change
+
+  What I will NOT do:
+    - Touch, move, or delete anything on your existing calendars
+    - Read your personal events
+
+  You can hide or delete the Taskmaster calendar at any time, and
+  nothing else in your account is affected.
+""")
+    print("=" * 70)
+    answer = input("  Allow calendar access? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("""
+  No problem — skipping calendar scheduling.
+
+  NOTE: Without calendar access I can still rank your tasks and write
+  your task list (TASK_LIST.md). If you change your mind, just run this
+  again and answer yes. I would only ever create my own separate
+  calendar; your real ones stay untouched.
+""")
+        return False
+    return True
 
 
 def _get_service():
@@ -176,6 +225,15 @@ def _budget_hours(task, cfg) -> float:
     grade_factor = 1.0 + min(weight, 0.5)
     padding = cfg.get("effort_padding", 1.2)
     total = base * grade_factor * padding
+
+    # Course difficulty learned from the syllabus (if analysis has been run).
+    mults = difficulty_multipliers()
+    course = task.course or ""
+    for name, mult in mults.items():
+        if name and (name in course or course in name):
+            total *= mult
+            break
+
     if _is_priority_course(task, cfg):
         total *= 1.1
     return round(total, 1)
@@ -280,6 +338,9 @@ def rebuild_calendar_and_brief():
     cfg = load_config()
     all_tasks = assignments_to_tasks()
 
+    # Courses Canvas says you TA/teach were already dropped at the source.
+    auto_skipped = list(getattr(assignments_to_tasks, "last_skipped_teaching", []))
+
     kept, skipped = [], []
     for t in all_tasks:
         if _is_excluded(t, cfg):
@@ -291,11 +352,25 @@ def rebuild_calendar_and_brief():
         t.priority_score = _rank_value(t, cfg)
     kept.sort(key=lambda t: t.priority_score or 0, reverse=True)
 
+    # Ask before touching the calendar. If declined, still rank and list tasks.
+    if not _consent_prompt():
+        briefing = [{
+            "title": t.title,
+            "course": t.course,
+            "due": f"{t.due_at.astimezone():%a %b %d %I:%M %p}",
+            "rank": t.priority_score,
+            "budgeted_hours": _budget_hours(t, cfg),
+            "blocks": 0,
+            "fully_scheduled": False,
+            "priority_course": _is_priority_course(t, cfg),
+        } for t in kept]
+        return briefing, skipped + auto_skipped, cfg
+
     service = _get_service()
     cal_id = _get_or_create_calendar(service)
     _clear_calendar(service, cal_id)
     briefing = _place_blocks(service, cal_id, kept, cfg)
-    return briefing, skipped, cfg
+    return briefing, skipped + auto_skipped, cfg
 
 
 def print_briefing(briefing, skipped, cfg) -> None:
@@ -327,3 +402,4 @@ def print_briefing(briefing, skipped, cfg) -> None:
 if __name__ == "__main__":
     brief, skipped, cfg = rebuild_calendar_and_brief()
     print_briefing(brief, skipped, cfg)
+    write_task_list(brief, skipped, cfg)

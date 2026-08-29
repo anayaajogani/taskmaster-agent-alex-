@@ -73,17 +73,27 @@ def _parse_due(raw: str | None) -> datetime | None:
     return datetime.fromisoformat(raw.replace("Z", "+00:00"))
 
 
-def assignments_to_tasks() -> list[Task]:
+def assignments_to_tasks(skip_teaching: bool = True) -> list[Task]:
     """Pull every course's assignments and normalize to Task objects.
 
     Skips assignments with no due date and ones already past due.
+
+    If skip_teaching is True (default), courses where Canvas says you are a
+    TA/teacher are skipped entirely — those assignments are your students'
+    work, not yours. Courses where the enrollment doesn't reflect reality
+    (e.g. tutors enrolled as students) still need the manual exclusion list.
     """
     tasks: list[Task] = []
+    skipped_teaching: list[str] = []
     now = datetime.now(timezone.utc)
 
     for course in fetch_active_courses():
         course_id = course.get("id")
         course_name = course.get("name") or course.get("course_code") or str(course_id)
+
+        if skip_teaching and is_teaching_role(course):
+            skipped_teaching.append(f"{course_name} (you are {course_role(course)})")
+            continue
 
         for a in fetch_assignments(course_id):
             due = _parse_due(a.get("due_at"))
@@ -99,10 +109,14 @@ def assignments_to_tasks() -> list[Task]:
                     description=(a.get("description") or "")[:2000] or None,
                     due_at=due,
                     points_possible=a.get("points_possible"),
-                    course_total_points=None,  # Canvas doesn't give this directly;
-                    # you can sum assignment points per course if you want it exact
+                    course_total_points=None,
                 )
             )
+
+    if skipped_teaching:
+        assignments_to_tasks.last_skipped_teaching = skipped_teaching  # type: ignore
+    else:
+        assignments_to_tasks.last_skipped_teaching = []  # type: ignore
     return tasks
 
 
@@ -138,3 +152,32 @@ def run_once() -> int:
 if __name__ == "__main__":
     count = run_once()
     print(f"\nProcessed {count} upcoming assignment(s).")
+
+
+# ---------------------------------------------------------------------------
+# Role detection
+# ---------------------------------------------------------------------------
+
+# Canvas enrollment types that mean "you teach/support this course" rather
+# than "you take it". Assignments in these courses are other people's work.
+TEACHING_ROLES = {"ta", "teacher", "designer", "TaEnrollment", "TeacherEnrollment"}
+
+
+def course_role(course: dict) -> str:
+    """Return the user's role in a course: 'student', 'ta', 'teacher', etc.
+
+    Canvas reports this in the course's `enrollments` list. Note this is only
+    as accurate as the enrollment itself — at some schools tutors and readers
+    are enrolled as plain students, so this can't catch every case. The
+    manual exclusion list in the config covers those.
+    """
+    roles = [e.get("type", "") for e in (course.get("enrollments") or [])]
+    for r in roles:
+        if r in TEACHING_ROLES or r.lower().replace("enrollment", "") in TEACHING_ROLES:
+            return r.lower().replace("enrollment", "") or r
+    return roles[0].lower().replace("enrollment", "") if roles else "unknown"
+
+
+def is_teaching_role(course: dict) -> bool:
+    """True if the user teaches/TAs this course rather than taking it."""
+    return course_role(course) in TEACHING_ROLES

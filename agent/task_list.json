@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-08-29T13:45:00.586493-07:00",
+  "config": {
+    "priority_mode": "grade",
+    "daily_cap_hours": 4,
+    "work_window": "9:00-21:00",
+    "off_days": []
+  },
+  "tasks": [
+    {
+      "title": "Midterm 1",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due": "Thu Sep 24 07:00 PM",
+      "rank": 0.0553,
+      "budgeted_hours": 2.9,
+      "blocks": 2,
+      "fully_scheduled": true,
+      "priority_course": false
+    },
+    {
+      "title": "Midterm 2",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due": "Thu Oct 29 07:00 PM",
+      "rank": 0.0237,
+      "budgeted_hours": 2.9,
+      "blocks": 2,
+      "fully_scheduled": true,
+      "priority_course": false
+    }
+  ],
+  "ignored": [
+    "Paper One (Special Topics in American Cultures (Fall 2026))",
+    "Paper Two (Special Topics in American Cultures (Fall 2026))",
+    "Paper Three (Special Topics in American Cultures (Fall 2026))",
+    "Paper Four (Special Topics in American Cultures (Fall 2026))",
+    "Attendance (Special Topics in American Cultures (Fall 2026))",
+    "Golden Shovel (Special Topics in American Cultures (Fall 2026))",
+    "Directed Group Study for Freshmen and Sophomores (Fall 2025) (you are teacher)",
+    "Directed Group Study for Freshmen and Sophomores (Spring 2026) (you are teacher)",
+    "Technology Entrepreneurship (Fall 2026) (you are ta)"
+  ],
+  "non_canvas_courses": "no"
+}

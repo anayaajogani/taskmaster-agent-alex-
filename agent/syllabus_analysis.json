@@ -1,0 +1,66 @@
+{
+  "AI & Human Intelligence (Summer 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "Analysis failed: HTTPSConnectionPool(host='generativelanguage.googleapis.com', port=443): Read ti",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "syllabus page",
+    "course_id": 1555630
+  },
+  "American Poetry (Fall 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "No usable syllabus text found.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "none found",
+    "course_id": 1558201
+  },
+  "Field Studies (Summer 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "No usable syllabus text found.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "none found",
+    "course_id": 1555181
+  },
+  "Health Economics (Summer 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "No usable syllabus text found.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "syllabus page (short)",
+    "course_id": 1554817
+  },
+  "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "Analysis failed: 503 Server Error: Service Unavailable for url: https://generativelanguage.google",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "syllabus page",
+    "course_id": 1557692
+  },
+  "Special Topics in American Cultures (Fall 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "No usable syllabus text found.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "none found",
+    "course_id": 1557781
+  },
+  "Technology Entrepreneurship (Fall 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "No usable syllabus text found.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "syllabus page (short)",
+    "course_id": 1557206
+  },
+  "Writing at the University: A Writing Seminar for Transfer Students (Summer 2026)": {
+    "difficulty": 3,
+    "difficulty_reason": "The provided text contains no course details, policies, or workload information.",
+    "weekly_hours_estimate": 0,
+    "assignments": [],
+    "source": "syllabus page",
+    "course_id": 1553909
+  }
+}
