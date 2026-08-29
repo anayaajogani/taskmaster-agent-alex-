@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import datetime as dt
 import os
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -35,10 +36,16 @@ from .onboarding import load_config
 from .task_list import write_task_list
 
 try:
-    from .syllabus import difficulty_multipliers
+    from .syllabus import difficulty_multipliers, syllabus_tasks, recurring_work
 except Exception:  # syllabus analysis is optional
     def difficulty_multipliers() -> dict:
         return {}
+
+    def syllabus_tasks() -> list:
+        return []
+
+    def recurring_work() -> list:
+        return []
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -330,16 +337,35 @@ def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
             "blocks": placed,
             "fully_scheduled": remaining <= 0,
             "priority_course": _is_priority_course(task, cfg),
+            "from_syllabus": task.source == "syllabus",
         })
     return briefing
 
 
+def _dedupe_key(task) -> str:
+    """Loose key so a Canvas assignment and its syllabus mention collapse."""
+    title = re.sub(r"[^a-z0-9]+", " ", (task.title or "").lower()).strip()
+    return f"{title}|{(task.course or '')[:20].lower()}"
+
+
 def rebuild_calendar_and_brief():
     cfg = load_config()
-    all_tasks = assignments_to_tasks()
+    canvas_tasks = assignments_to_tasks()
 
     # Courses Canvas says you TA/teach were already dropped at the source.
     auto_skipped = list(getattr(assignments_to_tasks, "last_skipped_teaching", []))
+
+    # Merge in verified syllabus assignments Canvas never listed (finals,
+    # project milestones). Canvas wins on conflicts since it's authoritative.
+    seen = {_dedupe_key(t) for t in canvas_tasks}
+    from_syllabus = []
+    for t in syllabus_tasks():
+        k = _dedupe_key(t)
+        if k not in seen:
+            seen.add(k)
+            from_syllabus.append(t)
+
+    all_tasks = canvas_tasks + from_syllabus
 
     kept, skipped = [], []
     for t in all_tasks:
@@ -363,6 +389,7 @@ def rebuild_calendar_and_brief():
             "blocks": 0,
             "fully_scheduled": False,
             "priority_course": _is_priority_course(t, cfg),
+            "from_syllabus": t.source == "syllabus",
         } for t in kept]
         return briefing, skipped + auto_skipped, cfg
 
@@ -385,8 +412,19 @@ def print_briefing(briefing, skipped, cfg) -> None:
     for i, b in enumerate(briefing, 1):
         flag = "OK   " if b["fully_scheduled"] else "TIGHT"
         star = "*" if b["priority_course"] else " "
-        print(f"{i:>2}.{star}[{flag}] {b['title'][:34]:<34} | {(b['course'] or '')[:16]:<16} "
+        src = "S" if b.get("from_syllabus") else " "
+        print(f"{i:>2}.{star}{src}[{flag}] {b['title'][:32]:<32} | {(b['course'] or '')[:16]:<16} "
               f"| due {b['due']:<19} | {b['budgeted_hours']}h/{b['blocks']} blk")
+
+    recurring = recurring_work()
+    if recurring:
+        print(f"\n  Ongoing work from syllabi ({len(recurring)}) — no single deadline,")
+        print("  so not scheduled as blocks, but don't forget it:")
+        by_course: dict = {}
+        for r in recurring:
+            by_course.setdefault(r["course"][:34], []).append(r["title"])
+        for course, items in by_course.items():
+            print(f"    {course}: {', '.join(items[:4])}")
     if skipped:
         print("\n  Ignored (you told me to skip these):")
         for s in skipped:
@@ -396,6 +434,7 @@ def print_briefing(briefing, skipped, cfg) -> None:
     print("\n  Calendar colors:  RED = due <2 days   ORANGE = <5 days   "
           "YELLOW = <2 weeks\n                    GREEN = later      "
           "PURPLE = priority course")
+    print("  Markers: * = priority course   S = found in syllabus (not in Canvas)")
     print("=" * 78 + "\n")
 
 

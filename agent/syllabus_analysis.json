@@ -1,9 +1,40 @@
 {
   "AI & Human Intelligence (Summer 2026)": {
     "difficulty": 3,
-    "difficulty_reason": "Analysis failed: HTTPSConnectionPool(host='generativelanguage.googleapis.com', port=443): Read ti",
-    "weekly_hours_estimate": 0,
-    "assignments": [],
+    "difficulty_reason": "The accelerated six-week format requires managing weekly Python programming labs, conceptual readings, discussions, and quizzes.",
+    "weekly_hours_estimate": 12,
+    "assignments": [
+      {
+        "title": "Assigned Readings",
+        "due_hint": "weekly",
+        "type": "reading"
+      },
+      {
+        "title": "Discussions + Reflect and Evaluate",
+        "due_hint": "weekly",
+        "type": "participation"
+      },
+      {
+        "title": "Module Quizzes",
+        "due_hint": "weekly",
+        "type": "exam"
+      },
+      {
+        "title": "Weekly Labs",
+        "due_hint": "weekly",
+        "type": "problem set"
+      },
+      {
+        "title": "Module Content and Guided Activities",
+        "due_hint": "weekly",
+        "type": "other"
+      },
+      {
+        "title": "Academic Integrity Verification Assignment",
+        "due_hint": "unknown",
+        "type": "reading"
+      }
+    ],
     "source": "syllabus page",
     "course_id": 1555630
   },
@@ -33,9 +64,60 @@
   },
   "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)": {
     "difficulty": 3,
-    "difficulty_reason": "Analysis failed: 503 Server Error: Service Unavailable for url: https://generativelanguage.google",
-    "weekly_hours_estimate": 0,
-    "assignments": [],
+    "difficulty_reason": "The course involves regular required readings assessed via weekly closed-note warm-up quizzes, active discussion sections, and multiple written exams.",
+    "weekly_hours_estimate": 6,
+    "assignments": [
+      {
+        "title": "Weekly Readings",
+        "due_hint": "weekly",
+        "type": "reading"
+      },
+      {
+        "title": "Section Attendance and Participation",
+        "due_hint": "weekly",
+        "type": "participation"
+      },
+      {
+        "title": "Section Warm Ups",
+        "due_hint": "weekly",
+        "type": "other"
+      },
+      {
+        "title": "Midterm 1",
+        "due_hint": "September 24",
+        "type": "exam"
+      },
+      {
+        "title": "Midterm 2",
+        "due_hint": "October 29",
+        "type": "exam"
+      },
+      {
+        "title": "Final Exam",
+        "due_hint": "December 15",
+        "type": "exam"
+      },
+      {
+        "title": "Research Project Application (Alternative to Final Exam)",
+        "due_hint": "October 9",
+        "type": "project"
+      },
+      {
+        "title": "Research Project Outline & Annotated Bibliography",
+        "due_hint": "October 30",
+        "type": "project"
+      },
+      {
+        "title": "Research Project Rough Draft",
+        "due_hint": "November 23",
+        "type": "paper"
+      },
+      {
+        "title": "Research Project Final Draft",
+        "due_hint": "December 15",
+        "type": "paper"
+      }
+    ],
     "source": "syllabus page",
     "course_id": 1557692
   },
@@ -57,8 +139,8 @@
   },
   "Writing at the University: A Writing Seminar for Transfer Students (Summer 2026)": {
     "difficulty": 3,
-    "difficulty_reason": "The provided text contains no course details, policies, or workload information.",
-    "weekly_hours_estimate": 0,
+    "difficulty_reason": "The syllabus text provides no specific details on course requirements, workload, or expectations.",
+    "weekly_hours_estimate": 6,
     "assignments": [],
     "source": "syllabus page",
     "course_id": 1553909

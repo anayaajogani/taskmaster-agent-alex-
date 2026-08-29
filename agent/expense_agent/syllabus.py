@@ -127,21 +127,33 @@ Return ONLY a JSON object, no prose, no markdown fences:
 {
   "difficulty": <integer 1-5>,
   "difficulty_reason": "<one short sentence>",
+  "difficulty_evidence": "<VERBATIM quote from the syllabus, 5-25 words>",
   "weekly_hours_estimate": <number>,
   "assignments": [
-    {"title": "<name>", "due_hint": "<date or 'weekly' or 'unknown'>", "type": "<reading|paper|exam|problem set|participation|project|other>"}
+    {
+      "title": "<name>",
+      "due_hint": "<date or 'weekly' or 'unknown'>",
+      "type": "<reading|paper|exam|problem set|participation|project|other>",
+      "evidence": "<VERBATIM quote from the syllabus that mentions this, 5-25 words>"
+    }
   ]
 }
 
-Rules:
-- difficulty: 1 = very light, 5 = very demanding. Judge from workload,
-  assessment weight, reading load, and stated expectations.
-- weekly_hours_estimate: realistic out-of-class hours per week.
-- assignments: list recurring or one-off work described in the syllabus
-  (weekly readings, participation, papers, exams). Include things that would
-  NOT appear in an assignments list, like "weekly reading response".
-- Do NOT invent specifics not present in the text. If the syllabus is
-  uninformative, return difficulty 3 and an empty assignments list.
+CRITICAL GROUNDING RULES:
+- Every `evidence` field MUST be copied EXACTLY, word for word, from the
+  syllabus text below. Do not paraphrase, summarize, or reconstruct it.
+- If you cannot find a verbatim quote supporting an assignment, DO NOT
+  include that assignment at all.
+- Never infer assignments from what a course "usually" has. Only list what
+  this specific text states.
+- If the syllabus has no usable content, return difficulty 3,
+  weekly_hours_estimate 0, an empty assignments list, and empty evidence.
+
+Other rules:
+- difficulty: 1 = very light, 5 = very demanding, judged only from what the
+  text actually says about workload, assessments, and reading load.
+- weekly_hours_estimate: realistic out-of-class hours per week. Use 0 if the
+  text gives you nothing to base it on.
 
 SYLLABUS TEXT:
 """
@@ -208,6 +220,7 @@ def analyze_all_courses(only_current: bool = True) -> dict:
         print(f"  Reading syllabus: {name[:50]}...")
         text, source = gather_syllabus_text(cid)
         analysis = analyze_with_gemini(text)
+        analysis = verify_analysis(analysis, text)
         analysis["source"] = source
         analysis["course_id"] = cid
         results[name] = analysis
@@ -246,11 +259,17 @@ def print_report(results: dict) -> None:
         print(f"    Why:         {a.get('difficulty_reason', '')[:70]}")
         print(f"    Source:      {a.get('source')}")
         assignments = a.get("assignments", [])
+        g = a.get("grounding", {})
         if assignments:
-            print(f"    Found in syllabus ({len(assignments)}):")
+            print(f"    Found in syllabus ({len(assignments)}, all verified):")
             for x in assignments[:8]:
                 print(f"      - {x.get('title','')[:45]:<45} "
                       f"[{x.get('type','')}] due: {x.get('due_hint','')}")
+        if g.get("assignments_dropped"):
+            print(f"    DISCARDED as unverifiable ({len(g['assignments_dropped'])}): "
+                  f"{', '.join(g['assignments_dropped'][:4])}")
+        if not g.get("difficulty_grounded", True):
+            print("    Difficulty rating was not backed by the text -> defaulted to 3")
     print("\n" + "=" * 78)
     print(f"  Saved to {SYLLABUS_CACHE.name}")
     print("  Difficulty multipliers now available to the scheduler.")
@@ -261,3 +280,199 @@ if __name__ == "__main__":
     print("\nAnalyzing syllabi for current courses...\n")
     res = analyze_all_courses()
     print_report(res)
+
+
+# ---------------------------------------------------------------------------
+# Grounding verification
+# ---------------------------------------------------------------------------
+# Asking the model to cite sources is a request, not a guarantee. This is the
+# enforcement: every claimed quote must actually appear in the syllabus text.
+# Anything we can't verify is dropped rather than shown to the user.
+
+def _normalize(s: str) -> str:
+    """Loose normalization so trivial whitespace/punctuation diffs don't fail."""
+    s = (s or "").lower()
+    s = re.sub(r"[\u2018\u2019\u201c\u201d]", "'", s)
+    s = re.sub(r"[^a-z0-9' ]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _quote_is_grounded(quote: str, source: str, min_words: int = 4) -> bool:
+    """True if the quote genuinely appears in the source text.
+
+    Exact substring match after normalization. Falls back to requiring a long
+    contiguous run of the quote's words to appear, which tolerates the model
+    trimming a word at either end but still rejects invention.
+    """
+    q = _normalize(quote)
+    s = _normalize(source)
+    if not q or len(q.split()) < min_words:
+        return False
+    if q in s:
+        return True
+    # allow a shortened window of the quote to match (model trimmed an edge)
+    words = q.split()
+    for size in range(len(words), min_words - 1, -1):
+        for start in range(0, len(words) - size + 1):
+            if " ".join(words[start:start + size]) in s:
+                return True
+    return False
+
+
+def verify_analysis(analysis: dict, source_text: str) -> dict:
+    """Drop any model claim that isn't backed by a verbatim quote.
+
+    Adds a `grounding` report so the briefing can be honest about what was
+    verified vs. discarded.
+    """
+    kept, dropped = [], []
+    for a in analysis.get("assignments", []) or []:
+        if _quote_is_grounded(a.get("evidence", ""), source_text):
+            kept.append(a)
+        else:
+            dropped.append(a.get("title", "(untitled)"))
+
+    diff_ev = analysis.get("difficulty_evidence", "")
+    diff_grounded = _quote_is_grounded(diff_ev, source_text)
+
+    analysis["assignments"] = kept
+    analysis["grounding"] = {
+        "assignments_kept": len(kept),
+        "assignments_dropped": dropped,
+        "difficulty_grounded": diff_grounded,
+    }
+
+    # If the difficulty rating isn't backed by the text, don't trust it —
+    # fall back to neutral rather than letting an unsupported number shape
+    # the schedule.
+    if not diff_grounded:
+        analysis["difficulty"] = 3
+        analysis["difficulty_reason"] = (
+            "Ungrounded rating discarded; defaulted to neutral."
+        )
+        analysis["weekly_hours_estimate"] = 0
+
+    return analysis
+
+
+# ---------------------------------------------------------------------------
+# Feed verified syllabus assignments into the scheduler
+# ---------------------------------------------------------------------------
+
+_MONTHS = {
+    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
+    "july": 7, "august": 8, "september": 9, "october": 10, "november": 11,
+    "december": 12,
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "jun": 6, "jul": 7, "aug": 8,
+    "sep": 9, "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _parse_due_hint(hint: str, year: int | None = None):
+    """Turn a due_hint like 'December 15' or '10/9' into a datetime.
+
+    Returns None for vague hints ('weekly', 'unknown') — those are real work
+    but have no single deadline, so they aren't schedulable as one block.
+    """
+    import datetime as _dt
+
+    if not hint:
+        return None
+    h = hint.strip().lower()
+    if h in ("weekly", "unknown", "ongoing", "n/a", ""):
+        return None
+
+    now = _dt.datetime.now(_dt.timezone.utc)
+    year = year or now.year
+
+    # "December 15" / "Dec 15" / "15 December"
+    m = re.search(r"([a-z]+)\s+(\d{1,2})", h)
+    if m and m.group(1) in _MONTHS:
+        month, day = _MONTHS[m.group(1)], int(m.group(2))
+    else:
+        m = re.search(r"(\d{1,2})\s+([a-z]+)", h)
+        if m and m.group(2) in _MONTHS:
+            day, month = int(m.group(1)), _MONTHS[m.group(2)]
+        else:
+            # numeric like 10/9 or 12-15
+            m = re.search(r"(\d{1,2})[/-](\d{1,2})", h)
+            if not m:
+                return None
+            month, day = int(m.group(1)), int(m.group(2))
+
+    try:
+        due = _dt.datetime(year, month, day, 23, 59, tzinfo=_dt.timezone.utc)
+    except ValueError:
+        return None
+    # If the date already passed this year, assume it means next year.
+    if due < now:
+        try:
+            due = due.replace(year=year + 1)
+        except ValueError:
+            return None
+    return due
+
+
+def syllabus_tasks() -> list:
+    """Build Task objects from VERIFIED syllabus assignments with real dates.
+
+    Only assignments that survived grounding verification AND have a parseable
+    deadline become tasks. Recurring work ('weekly') is excluded here — it has
+    no single due date, so it can't be scheduled as one block.
+    """
+    from .models import Task
+
+    if not SYLLABUS_CACHE.exists():
+        return []
+    try:
+        data = json.loads(SYLLABUS_CACHE.read_text())
+    except Exception:
+        return []
+
+    tasks = []
+    for course, analysis in data.items():
+        for a in analysis.get("assignments", []) or []:
+            due = _parse_due_hint(a.get("due_hint", ""))
+            if due is None:
+                continue
+            title = a.get("title", "").strip()
+            if not title:
+                continue
+            tasks.append(
+                Task(
+                    source="syllabus",
+                    source_ref=f"{analysis.get('course_id','?')}:{title[:40]}",
+                    title=title,
+                    course=course,
+                    description=a.get("evidence", "")[:500] or None,
+                    due_at=due,
+                    points_possible=None,
+                    course_total_points=None,
+                )
+            )
+    return tasks
+
+
+def recurring_work() -> list[dict]:
+    """Verified syllabus work with no single deadline (weekly readings etc.).
+
+    Not schedulable as a block, but worth surfacing in the briefing so the
+    student knows it exists.
+    """
+    if not SYLLABUS_CACHE.exists():
+        return []
+    try:
+        data = json.loads(SYLLABUS_CACHE.read_text())
+    except Exception:
+        return []
+    out = []
+    for course, analysis in data.items():
+        for a in analysis.get("assignments", []) or []:
+            if _parse_due_hint(a.get("due_hint", "")) is None:
+                out.append({
+                    "course": course,
+                    "title": a.get("title", ""),
+                    "cadence": a.get("due_hint", "ongoing"),
+                    "type": a.get("type", "other"),
+                })
+    return out

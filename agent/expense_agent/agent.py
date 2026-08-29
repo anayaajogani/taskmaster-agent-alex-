@@ -187,18 +187,45 @@ effort_agent = Agent(
 
 
 def apply_effort_estimate(node_input, ctx: Context) -> Event:
-    """Take the effort_agent's JSON output and store it on state for scoring."""
-    est_hours = 2.0
+    """Take the effort_agent's JSON output and store it on state for scoring.
+
+    The LLM can hallucinate an absurd number here (0.01h, 400h), and that
+    number goes straight into calendar scheduling. So we clamp it to a range
+    that's plausible for a single student assignment, and record when we had
+    to intervene so it isn't silent.
+    """
+    MIN_HOURS, MAX_HOURS, DEFAULT_HOURS = 0.25, 20.0, 2.0
+
+    est_hours = DEFAULT_HOURS
     confidence = "low"
+    clamped = False
     try:
         text = node_input if isinstance(node_input, str) else json.dumps(node_input)
-        # strip accidental markdown fences
         text = text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
         parsed = json.loads(text)
-        est_hours = float(parsed.get("estimated_hours", 2.0))
+        raw = float(parsed.get("estimated_hours", DEFAULT_HOURS))
+        if raw != raw or raw <= 0:  # NaN or nonsense
+            est_hours, clamped = DEFAULT_HOURS, True
+        elif raw < MIN_HOURS:
+            est_hours, clamped = MIN_HOURS, True
+        elif raw > MAX_HOURS:
+            est_hours, clamped = MAX_HOURS, True
+        else:
+            est_hours = raw
         confidence = parsed.get("confidence", "low")
+        if confidence not in ("low", "medium", "high"):
+            confidence = "low"
     except Exception:
-        pass
+        est_hours, confidence, clamped = DEFAULT_HOURS, "low", True
+
+    if clamped:
+        confidence = "low"  # we overrode the model; don't present it as certain
+        print(json.dumps({
+            "severity": "INFO",
+            "message": "Effort estimate was out of range and was clamped.",
+            "clamped_to": est_hours,
+        }), flush=True)
+
     ctx.state["estimated_hours"] = est_hours
     ctx.state["estimate_confidence"] = confidence
     return Event(output=ctx.state.get("parsed_task", {}))
