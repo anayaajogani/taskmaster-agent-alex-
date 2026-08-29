@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taskmaster — Today</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #12141C;
+    --surface:  #191C28;
+    --raised:   #202435;
+    --line:     #2C3145;
+    --paper:    #E9E7F2;
+    --muted:    #767D9C;
+    --high:     #FF5C7A;
+    --med:      #FFB454;
+    --low:      #5CD1A8;
+    --accent:   #8B7FFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 64px;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- header ---------- */
+  .masthead {
+    padding: 56px 0 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 36px;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .today {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: clamp(38px, 7vw, 62px);
+    line-height: 0.94;
+    letter-spacing: -0.03em;
+    margin: 0 0 18px;
+  }
+  .load {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .load b { color: var(--paper); font-weight: 500; }
+  .over { color: var(--med); }
+
+  /* ---------- tiers ---------- */
+  .tier { margin-bottom: 40px; }
+  .tier-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .tier-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .tier-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* ---------- task ---------- */
+  .task {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px 18px;
+    margin-bottom: 10px;
+  }
+  .task-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .hours {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--paper);
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .tag {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .tag-syl { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .tag-pri { color: var(--med); border-color: color-mix(in srgb, var(--med) 40%, transparent); }
+  .tag-late { color: var(--high); border-color: color-mix(in srgb, var(--high) 45%, transparent); }
+
+  /* ---------- runway: the signature element ---------- */
+  .runway { position: relative; }
+  .track {
+    height: 3px;
+    background: var(--raised);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  .elapsed {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 2px;
+    transition: width .5s cubic-bezier(.2,.7,.3,1);
+  }
+  .now {
+    position: absolute;
+    top: -4px;
+    width: 2px; height: 11px;
+    background: var(--paper);
+    border-radius: 1px;
+    transform: translateX(-1px);
+    transition: left .5s cubic-bezier(.2,.7,.3,1);
+  }
+  .runway-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ---------- later ---------- */
+  .later { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 44px; }
+  .later-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+    font-size: 14px;
+  }
+  .later-row:last-child { border-bottom: none; }
+  .later-when { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .later-course { color: var(--muted); font-size: 12px; }
+
+  /* ---------- study plan ---------- */
+  .plan { margin-bottom: 40px; }
+  .capacity {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--raised);
+    display: flex;
+    overflow: hidden;
+    margin: 12px 0 8px;
+  }
+  .cap-seg { height: 100%; }
+  .cap-key {
+    display: flex;
+    gap: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .cap-key i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .pick {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
+  }
+  .pick:last-child { border-bottom: none; }
+  .pick-est {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .deferred {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+  }
+
+  /* ---------- materials ---------- */
+  .mats { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 44px; }
+  .mat-course {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 10px;
+  }
+  .mat-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
+  }
+  .mat-row:last-child { border-bottom: none; }
+  .mat-kind {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    min-width: 78px;
+    flex: none;
+  }
+  .mat-title { font-size: 14px; }
+  .mat-title a { color: var(--paper); text-decoration: none; border-bottom: 1px solid transparent; }
+  .mat-title a:hover, .mat-title a:focus { border-bottom-color: var(--accent); }
+
+  /* ---------- empty / error ---------- */
+  .empty {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .empty h3 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 20px; font-weight: 600; margin: 0 0 8px;
+  }
+  .empty p { color: var(--muted); font-size: 14px; margin: 0; line-height: 1.55; }
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    background: var(--raised);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--paper);
+  }
+  .foot {
+    margin-top: 40px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--low);
+    flex: none;
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.25; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TIERS = [
+  { key: "HIGH",   label: "High priority",   color: "var(--high)" },
+  { key: "MEDIUM", label: "Medium priority", color: "var(--med)"  },
+  { key: "LOW",    label: "Low priority",    color: "var(--low)"  },
+];
+
+function longDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: "long", month: "long", day: "numeric",
+  });
+}
+
+function shortDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    month: "short", day: "numeric",
+  });
+}
+
+function dueText(days) {
+  if (days < 0) return "overdue";
+  if (days === 0) return "due today";
+  if (days === 1) return "due tomorrow";
+  return `${days} days left`;
+}
+
+// The runway: how far between "you could start" and "it's due" are we?
+function Runway({ task, today, color }) {
+  const start = new Date(task.start_date + "T00:00:00");
+  const due   = new Date(task.due_date + "T00:00:00");
+  const now   = new Date(today + "T00:00:00");
+
+  const span = Math.max(due - start, 1);
+  const pct  = Math.min(Math.max((now - start) / span, 0), 1) * 100;
+
+  return (
+    <div className="runway">
+      <div className="track">
+        <div className="elapsed" style={{ width: pct + "%", background: color, opacity: 0.55 }} />
+        <div className="now" style={{ left: pct + "%" }} />
+      </div>
+      <div className="runway-labels">
+        <span>start {shortDate(task.start_date)}</span>
+        <span>due {shortDate(task.due_date)}</span>
+      </div>
+    </div>
+  );
+}
+
+function Task({ task, today, color }) {
+  return (
+    <div className="task">
+      <div className="task-top">
+        <div className="title">{task.title}</div>
+        <div className="hours">{task.hours}h</div>
+      </div>
+      <div className="meta">
+        <span>{task.course}</span>
+        <span>·</span>
+        <span>{dueText(task.days_left)}</span>
+        {task.priority_course && <span className="tag tag-pri">priority course</span>}
+        {task.from_syllabus && <span className="tag tag-syl">from syllabus</span>}
+        {task.overdue_start && <span className="tag tag-late">start date passed</span>}
+      </div>
+      <Runway task={task} today={today} color={color} />
+    </div>
+  );
+}
+
+function App() {
+  const [data, setData] = useState(null);
+  const [err, setErr]   = useState(null);
+  const [lastSync, setLastSync] = useState(null);
+
+  // Poll the JSON so the page reflects the agent's latest run without a
+  // manual reload. Cheap: it's a local file, and only re-renders on change.
+  useEffect(() => {
+    let stop = false;
+    let prev = null;
+
+    const load = () => {
+      fetch("daily_view.json?t=" + Date.now())
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(d => {
+          if (stop) return;
+          const stamp = JSON.stringify(d);
+          if (stamp !== prev) { prev = stamp; setData(d); }
+          setLastSync(new Date());
+          setErr(null);
+        })
+        .catch(e => { if (!stop) setErr(String(e)); });
+    };
+
+    load();
+    const id = setInterval(load, 30000);          // every 30s
+    const onFocus = () => load();                  // and when you come back
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) load();
+    });
+
+    return () => {
+      stop = true;
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  if (err) return (
+    <div className="wrap">
+      <div className="masthead">
+        <p className="eyebrow">Taskmaster</p>
+        <h1 className="today">No data yet</h1>
+      </div>
+      <div className="empty">
+        <h3>Run the agent first</h3>
+        <p>
+          This page reads <code>daily_view.json</code>. Generate it with{" "}
+          <code>uv run python -m expense_agent.daily_view</code>, then serve this
+          folder with <code>python3 -m http.server 8000</code>.
+        </p>
+      </div>
+    </div>
+  );
+
+  if (!data) return <div className="wrap"><div className="masthead"><p className="eyebrow">Taskmaster</p><h1 className="today">Loading</h1></div></div>;
+
+  const active = data.active || [];
+  const later  = data.upcoming || [];
+  const load   = active.reduce((s, t) => s + (t.hours || 0), 0);
+  const cap    = data.daily_cap_hours;
+
+  return (
+    <div className="wrap">
+      <header className="masthead">
+        <p className="eyebrow">Taskmaster · what's open right now</p>
+        <h1 className="today">{longDate(data.date)}</h1>
+        <p className="load">
+          {active.length === 0
+            ? "Nothing open yet"
+            : <>
+                <b>{active.length}</b> {active.length === 1 ? "task" : "tasks"} open
+                {" · "}<b>{Math.round(load * 10) / 10}h</b> of work
+                {" · "}cap <b>{cap}h</b>/day
+                {load > cap && <span className="over"> · spread across several days</span>}
+              </>}
+        </p>
+      </header>
+
+      {active.length === 0 && (
+        <div className="empty">
+          <h3>Nothing to start today</h3>
+          <p>
+            {(data.materials || []).length > 0
+              ? "No deadlines are close enough to start on. Course materials below are open if you want to get ahead."
+              : "Everything on your plate is still far enough out that starting now wouldn't help. The list below shows when each one opens."}
+          </p>
+        </div>
+      )}
+
+      {TIERS.map(tier => {
+        const rows = active.filter(t => t.tier === tier.key);
+        if (!rows.length) return null;
+        return (
+          <section className="tier" key={tier.key}>
+            <div className="tier-head">
+              <span className="dot" style={{ background: tier.color }} />
+              <span className="tier-name" style={{ color: tier.color }}>{tier.label}</span>
+              <span className="tier-count">{rows.length}</span>
+            </div>
+            {rows.map((t, i) => (
+              <Task key={t.title + i} task={t} today={data.date} color={tier.color} />
+            ))}
+          </section>
+        );
+      })}
+
+      {later.length > 0 && (
+        <section className="later">
+          <div className="tier-head">
+            <span className="tier-name" style={{ color: "var(--muted)" }}>Opens later</span>
+            <span className="tier-count">{later.length}</span>
+          </div>
+          {later.map((t, i) => (
+            <div className="later-row" key={t.title + i}>
+              <div>
+                <div>{t.title}</div>
+                <div className="later-course">{t.course}</div>
+              </div>
+              <div className="later-when">
+                {t.opens_in_days === 1 ? "starts tomorrow" : `starts in ${t.opens_in_days} days`}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {data.study_plan && (data.study_plan.picks || []).length > 0 && (() => {
+        const p = data.study_plan;
+        const total = p.cap_hours * 60;
+        const dl = Math.min(p.deadline_minutes, total);
+        const st = Math.min(p.planned_minutes, Math.max(total - dl, 0));
+        const free = Math.max(total - dl - st, 0);
+        return (
+          <section className="plan">
+            <div className="tier-head">
+              <span className="dot" style={{ background: "var(--accent)" }} />
+              <span className="tier-name" style={{ color: "var(--accent)" }}>Study today</span>
+              <span className="tier-count">{p.picks.length}</span>
+            </div>
+
+            <div className="capacity">
+              {dl > 0 && <div className="cap-seg" style={{ width: (dl/total*100)+"%", background: "var(--high)" }} />}
+              {st > 0 && <div className="cap-seg" style={{ width: (st/total*100)+"%", background: "var(--accent)" }} />}
+              {free > 0 && <div className="cap-seg" style={{ width: (free/total*100)+"%", background: "var(--raised)" }} />}
+            </div>
+            <div className="cap-key">
+              {dl > 0 && <span><i style={{background:"var(--high)"}} />deadline work {Math.round(dl)}m</span>}
+              <span><i style={{background:"var(--accent)"}} />study {Math.round(st)}m</span>
+              {free > 0 && <span><i style={{background:"var(--raised)"}} />free {Math.round(free)}m</span>}
+            </div>
+
+            {p.picks.map((m, i) => (
+              <div className="pick" key={m.title + i}>
+                <span className="mat-kind">{m.label}</span>
+                <span className="mat-title">
+                  {m.url ? <a href={m.url} target="_blank" rel="noreferrer">{m.title}</a> : m.title}
+                </span>
+                <span className="pick-est">~{m.est_minutes}m</span>
+              </div>
+            ))}
+            {p.not_today > 0 && (
+              <p className="deferred">{p.not_today} more saved for another day</p>
+            )}
+          </section>
+        );
+      })()}
+
+      {(data.materials || []).length > 0 && (() => {
+        const picked = new Set(((data.study_plan || {}).picks || []).map(x => x.title));
+        const rest = data.materials.filter(m => !picked.has(m.title));
+        if (!rest.length) return null;
+        return (
+        <section className="mats">
+          <div className="tier-head">
+            <span className="tier-name" style={{ color: "var(--muted)" }}>Also open</span>
+            <span className="tier-count">{rest.length}</span>
+          </div>
+          {Object.entries(
+            rest.reduce((acc, m) => {
+              (acc[m.course] = acc[m.course] || []).push(m);
+              return acc;
+            }, {})
+          ).map(([course, rows]) => (
+            <div key={course}>
+              <div className="mat-course">{course}</div>
+              {rows.map((m, i) => (
+                <div className="mat-row" key={m.title + i}>
+                  <span className="mat-kind">{m.label}</span>
+                  <span className="mat-title">
+                    {m.url
+                      ? <a href={m.url} target="_blank" rel="noreferrer">{m.title}</a>
+                      : m.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </section>
+        );
+      })()}
+
+      <p className="foot">
+        <span className="pulse" /> Live · agent last ran{" "}
+        {new Date(data.generated_at).toLocaleString(undefined, {
+          month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+        })}
+        {lastSync && <> · checked {lastSync.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</>}
+      </p>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "materials": [
+    {
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "module": "Orientation",
+      "title": "Orientation Page",
+      "type": "Page",
+      "label": "read",
+      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806138"
+    },
+    {
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "module": "Orientation",
+      "title": "Academic Integrity Premise",
+      "type": "Page",
+      "label": "read",
+      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806139"
+    },
+    {
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "module": "Orientation",
+      "title": "Academic Integrity Pledge",
+      "type": "Quiz",
+      "label": "quiz",
+      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806140"
+    },
+    {
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "module": "Orientation",
+      "title": "Key Course Policies Quiz",
+      "type": "Quiz",
+      "label": "quiz",
+      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806141"
+    }
+  ]
+}

@@ -76,7 +76,7 @@ def _tier(score: float, scores: list[float]) -> str:
     return TIER_LOW
 
 
-def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None) -> dict:
+def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=None) -> dict:
     """Build today's view from the scheduler's briefing.
 
     Returns a dict with active tasks (tiered) and upcoming ones not yet open.
@@ -129,7 +129,16 @@ def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None) -> dict:
         "daily_cap_hours": cfg.get("daily_cap_hours", 4),
         "active": active,
         "upcoming": upcoming[:8],
+        "materials": materials or [],
     }
+
+    # What to actually study today with whatever capacity is left over.
+    try:
+        from .study_plan import build_study_plan
+        view["study_plan"] = build_study_plan(view, cfg)
+    except Exception:
+        view["study_plan"] = None
+
     DAILY_JSON.write_text(json.dumps(view, indent=2, default=str))
     return view
 
@@ -186,8 +195,24 @@ def print_daily_view(view: dict) -> None:
             when = "tomorrow" if d == 1 else f"in {d} days"
             print(f"    {DIM}· {u['title'][:38]:<38} start {when}{RESET}")
 
+    plan = view.get("study_plan")
+    if plan:
+        try:
+            from .study_plan import print_study_plan
+            print_study_plan(plan, DIM=DIM, RESET=RESET, ACC=BOLD)
+        except Exception:
+            pass
+
+    mats = view.get("materials", [])
+    picked_titles = {p["title"] for p in (plan or {}).get("picks", [])}
+    rest = [m for m in mats if m["title"] not in picked_titles]
+    if rest:
+        print(f"\n  {DIM}ALSO OPEN ({len(rest)}):{RESET}")
+        for r in rest[:6]:
+            print(f"      {DIM}· [{r['label']:<10}] {r['title'][:46]}{RESET}")
+
     print("\n" + "=" * 74)
-    print(f"  {DIM}* priority course   S from syllabus{RESET}")
+    print(f"  {DIM}* priority course   S from syllabus   ~est = rough guide, not measured{RESET}")
     print("=" * 74 + "\n")
 
 
@@ -226,4 +251,10 @@ if __name__ == "__main__":
             "priority_course": _is_priority_course(t, cfg),
         })
 
-    print_daily_view(build_daily_view(briefing, cfg))
+    try:
+        from .materials import fetch_materials
+        materials = fetch_materials()
+    except Exception:
+        materials = []
+
+    print_daily_view(build_daily_view(briefing, cfg, materials=materials))
