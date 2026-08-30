@@ -13,11 +13,14 @@
 # limitations under the License.
 
 # ---------------------------------------------------------------------------
-# Cloud Run services — managed by Terraform.
+# Cloud Run service — managed by Terraform.
 #
-# The Makefile builds container images via Cloud Build, then Terraform
-# creates both services with the correct env vars, service accounts,
-# and wires BACKEND_URL automatically.
+# The Makefile builds the container image via Cloud Build, then Terraform
+# creates the service with the correct env vars and service account.
+#
+# Single service: Pub/Sub pushes assignment events straight to the ADK
+# graph, which calls Gemini for the effort estimate and writes the
+# Calendar block itself. No approval UI to gate — see main.tf.
 # ---------------------------------------------------------------------------
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -27,6 +30,8 @@ resource "google_cloud_run_v2_service" "backend" {
   deletion_protection = false
 
   template {
+    service_account = google_service_account.backend.email
+
     scaling {
       min_instance_count = 1
     }
@@ -38,48 +43,17 @@ resource "google_cloud_run_v2_service" "backend" {
         cpu_idle = false
       }
 
-}
-  }
-
-  depends_on = [google_project_service.apis]
-}
-
-resource "google_cloud_run_v2_service" "frontend" {
-  name                = var.frontend_service_name
-  location            = var.region
-  project             = var.project_id
-  deletion_protection = false
-  iap_enabled         = true
-
-  template {
-    service_account = google_service_account.frontend_invoker.email
-
-    scaling {
-      min_instance_count = 1
-    }
-
-    containers {
-      image = var.frontend_image
-
-      resources {
-        cpu_idle = false
-      }
-
+      # Pre-minted OAuth token for the Calendar write (see docs/setup_guide.md).
+      # Cloud Run has no browser for the interactive auth flow, so the token
+      # is minted once locally and injected here instead of a token file.
       env {
-        name  = "BACKEND_URL"
-        value = google_cloud_run_v2_service.backend.uri
-      }
-      env {
-        name  = "USE_SERVICE_AUTH"
-        value = "true"
-      }
-      env {
-        name  = "PUBSUB_SUBSCRIPTION"
-        value = google_pubsub_subscription.expense_push.name
-      }
-      env {
-        name  = "APP_NAME"
-        value = var.agent_name
+        name = "GCAL_TOKEN_JSON"
+        value_source {
+          secret_key_ref {
+            secret  = var.gcal_token_secret
+            version = "latest"
+          }
+        }
       }
     }
   }

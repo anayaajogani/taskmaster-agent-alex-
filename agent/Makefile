@@ -1,11 +1,10 @@
 PROJECT_ID ?= $(shell gcloud config get-value project 2>/dev/null)
 REGION ?= us-east1
-BACKEND_SERVICE ?= ambient-expense-agent
-FRONTEND_SERVICE ?= expense-approval-ui
+BACKEND_SERVICE ?= taskmaster-agent
 NOTIFICATION_EMAIL ?= your-email@example.com
-REGISTRY = $(REGION)-docker.pkg.dev/$(PROJECT_ID)/expense-agent
+GCAL_TOKEN_SECRET ?= gcal-token
+REGISTRY = $(REGION)-docker.pkg.dev/$(PROJECT_ID)/taskmaster-agent
 BACKEND_IMAGE = $(REGISTRY)/backend
-FRONTEND_IMAGE = $(REGISTRY)/frontend
 
 # ---------------------------------------------------------------------------
 # Local development
@@ -15,22 +14,17 @@ install:
 	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Installing uv..."; curl -LsSf https://astral.sh/uv/0.6.12/install.sh | sh; source $$HOME/.local/bin/env; }
 	uv sync
 
-install-frontend:
-	cd frontend && \
-		command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Installing uv..."; curl -LsSf https://astral.sh/uv/0.6.12/install.sh | sh; source $$HOME/.local/bin/env; } && \
-		uv sync
-
 dev:
 	uv run python expense_agent/fast_api_app.py
-
-dev-frontend:
-	cd frontend && BACKEND_URL=http://localhost:8080 uv run python main.py
 
 playground:
 	uv run adk web --port 8501
 
 test:
 	uv run python -m pytest tests/ -xvs
+
+check:
+	./scripts/check.sh
 
 lint:
 	uv run codespell . && \
@@ -41,10 +35,14 @@ lint:
 # ---------------------------------------------------------------------------
 # Cloud deployment (one command)
 #
-#   make deploy NOTIFICATION_EMAIL=finance@example.com
+#   make deploy NOTIFICATION_EMAIL=you@example.com
 #
-# Builds container images, then deploys everything via Terraform:
-# Cloud Run services, Pub/Sub, IAM, Cloud Monitoring.
+# Builds the container image, then deploys everything via Terraform:
+# Cloud Run, Pub/Sub, IAM, Cloud Monitoring.
+#
+# Prerequisite: a Secret Manager secret named $(GCAL_TOKEN_SECRET) holding
+# the pre-minted Calendar OAuth token JSON — see docs/setup_guide.md. Cloud
+# Run has no browser for the interactive auth flow.
 # ---------------------------------------------------------------------------
 
 deploy:
@@ -65,7 +63,7 @@ deploy:
 		--project=$(PROJECT_ID) --quiet
 	@echo ""
 	@echo "==> [2/4] Setting up Artifact Registry and Cloud Build permissions..."
-	-gcloud artifacts repositories create expense-agent \
+	-gcloud artifacts repositories create taskmaster-agent \
 		--repository-format=docker \
 		--location=$(REGION) \
 		--project=$(PROJECT_ID) 2>/dev/null
@@ -79,33 +77,26 @@ deploy:
 			--role="roles/storage.objectViewer" \
 			--quiet >/dev/null
 	@echo ""
-	@echo "==> [3/4] Building container images (parallel)..."
+	@echo "==> [3/4] Building the container image..."
 	gcloud builds submit . \
 		--tag $(BACKEND_IMAGE) \
-		--project=$(PROJECT_ID) --quiet & \
-	gcloud builds submit frontend/ \
-		--tag $(FRONTEND_IMAGE) \
-		--project=$(PROJECT_ID) --quiet & \
-	wait
+		--project=$(PROJECT_ID) --quiet
 	@echo ""
 	@echo "==> [4/4] Deploying infrastructure (Cloud Run, Pub/Sub, IAM, monitoring)..."
 	cd terraform && terraform init -input=false && terraform apply -auto-approve \
 		-var=project_id=$(PROJECT_ID) \
 		-var=region=$(REGION) \
 		-var=backend_service_name=$(BACKEND_SERVICE) \
-		-var=frontend_service_name=$(FRONTEND_SERVICE) \
 		-var=backend_image=$(BACKEND_IMAGE) \
-		-var=frontend_image=$(FRONTEND_IMAGE) \
-		-var=notification_email=$(NOTIFICATION_EMAIL)
+		-var=notification_email=$(NOTIFICATION_EMAIL) \
+		-var=gcal_token_secret=$(GCAL_TOKEN_SECRET)
 	@echo ""
 	@echo "==> Deployment complete!"
 	@echo ""
 	@cd terraform && \
 		echo "  Backend:   $$(terraform output -raw backend_url)" && \
-		echo "  Frontend:  $$(terraform output -raw frontend_url)" && \
-		echo "  Approval:  $$(terraform output -raw frontend_url)/approval" && \
-		echo "  Topic:     expense-reports" && \
-		echo "  Alerts:    Expenses >= $$100 -> $(NOTIFICATION_EMAIL)"
+		echo "  Topic:     assignment-events" && \
+		echo "  Alerts:    High-priority tasks -> $(NOTIFICATION_EMAIL)"
 
 remote-test:
 	@if [ -z "$(PROJECT_ID)" ]; then \
@@ -113,10 +104,10 @@ remote-test:
 		echo "Run: gcloud config set project <your-project-id>"; \
 		exit 1; \
 	fi
-	@echo "Publishing test expense (>= $$100, requires review)..."
-	gcloud pubsub topics publish expense-reports \
+	@echo "Publishing a test assignment (high priority: due soon, worth 40% of grade)..."
+	gcloud pubsub topics publish assignment-events \
 		--project=$(PROJECT_ID) \
-		--message='{"amount":250.00,"submitter":"alice@company.com","category":"travel","description":"Flight to NYC for client meeting","date":"2026-04-10"}' \
+		--message='{"source":"canvas","source_ref":"make-test","title":"Midterm Project","course":"DATA C100","description":"A substantial project submission.","due_at":"2026-09-02T04:00:00Z","points_possible":40,"course_total_points":100}' \
 		--attribute=source=make-test
 	@echo ""
 	@echo "Check Cloud Logging for results:"
@@ -133,10 +124,9 @@ clean:
 		-var=project_id=$(PROJECT_ID) \
 		-var=region=$(REGION) \
 		-var=backend_service_name=$(BACKEND_SERVICE) \
-		-var=frontend_service_name=$(FRONTEND_SERVICE) \
 		-var=backend_image=$(BACKEND_IMAGE) \
-		-var=frontend_image=$(FRONTEND_IMAGE) \
 		-var=notification_email=$(NOTIFICATION_EMAIL) \
+		-var=gcal_token_secret=$(GCAL_TOKEN_SECRET) \
 	|| (echo "" && \
 		echo "Retrying in 60s (GCP needs time to propagate alert policy deletion)..." && \
 		sleep 60 && \
@@ -144,8 +134,7 @@ clean:
 			-var=project_id=$(PROJECT_ID) \
 			-var=region=$(REGION) \
 			-var=backend_service_name=$(BACKEND_SERVICE) \
-			-var=frontend_service_name=$(FRONTEND_SERVICE) \
 			-var=backend_image=$(BACKEND_IMAGE) \
-			-var=frontend_image=$(FRONTEND_IMAGE) \
-			-var=notification_email=$(NOTIFICATION_EMAIL))
+			-var=notification_email=$(NOTIFICATION_EMAIL) \
+			-var=gcal_token_secret=$(GCAL_TOKEN_SECRET))
 	@echo "Cleanup complete."

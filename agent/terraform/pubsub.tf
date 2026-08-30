@@ -15,12 +15,14 @@
 # ---------------------------------------------------------------------------
 # Pub/Sub topic + authenticated push subscription → /trigger/pubsub
 #
-# Messages published to the "expense-reports" topic are automatically
-# pushed to the agent's trigger endpoint on Cloud Run.
+# The Canvas poller (Cloud Scheduler job, or `feed_canvas.py` for the
+# demo's manual "simulate sync" trigger) publishes one message per
+# assignment to "assignment-events"; each is pushed to the agent's
+# trigger endpoint on Cloud Run.
 # ---------------------------------------------------------------------------
 
-resource "google_pubsub_topic" "expense_reports" {
-  name    = "expense-reports"
+resource "google_pubsub_topic" "assignment_events" {
+  name    = "assignment-events"
   project = var.project_id
 
   depends_on = [google_project_service.apis]
@@ -28,16 +30,16 @@ resource "google_pubsub_topic" "expense_reports" {
 
 # Dead-letter topic for messages that fail after max delivery attempts.
 resource "google_pubsub_topic" "dead_letter" {
-  name    = "expense-reports-dead-letter"
+  name    = "assignment-events-dead-letter"
   project = var.project_id
 
   depends_on = [google_project_service.apis]
 }
 
-resource "google_pubsub_subscription" "expense_push" {
-  name    = "expense-reports-push"
+resource "google_pubsub_subscription" "assignment_push" {
+  name    = "assignment-events-push"
   project = var.project_id
-  topic   = google_pubsub_topic.expense_reports.id
+  topic   = google_pubsub_topic.assignment_events.id
 
   push_config {
     push_endpoint = "${google_cloud_run_v2_service.backend.uri}/apps/${var.agent_name}/trigger/pubsub"

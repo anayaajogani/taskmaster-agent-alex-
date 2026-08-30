@@ -13,11 +13,14 @@
 # limitations under the License.
 
 # ---------------------------------------------------------------------------
-# Terraform configuration for the Ambient Expense Agent infrastructure.
+# Terraform configuration for the Taskmaster agent infrastructure.
 #
-# This provisions the GCP resources needed for the ambient expense
-# agent: two Cloud Run services (backend + approval UI frontend),
-# Pub/Sub triggers, monitoring, and IAM.
+# This provisions the GCP resources needed for the student Taskmaster
+# agent: one Cloud Run service running the ADK graph, a Pub/Sub trigger
+# (fed by the Canvas poller), Cloud Monitoring for the reminder alert, and
+# IAM. No frontend/approval service — calendar writes are autonomous and
+# reversible (a dedicated calendar the agent owns), so there's no
+# human-in-the-loop step to gate here.
 # ---------------------------------------------------------------------------
 
 terraform {
@@ -37,7 +40,7 @@ provider "google" {
 
   default_labels = {
     goog-terraform-provisioned = "true"
-    app                        = "ambient-expense-agent"
+    app                        = "taskmaster-agent"
   }
 }
 
@@ -47,10 +50,10 @@ locals {
     "aiplatform.googleapis.com",
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
-    "iap.googleapis.com",
     "monitoring.googleapis.com",
     "pubsub.googleapis.com",
     "run.googleapis.com",
+    "secretmanager.googleapis.com",
   ]
 }
 

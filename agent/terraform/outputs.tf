@@ -17,18 +17,13 @@ output "backend_url" {
   value       = google_cloud_run_v2_service.backend.uri
 }
 
-output "frontend_url" {
-  description = "URL of the frontend Cloud Run service (approval UI)."
-  value       = google_cloud_run_v2_service.frontend.uri
-}
-
 output "pubsub_topic" {
-  description = "Pub/Sub topic for publishing expense reports."
-  value       = google_pubsub_topic.expense_reports.id
+  description = "Pub/Sub topic for publishing assignment events."
+  value       = google_pubsub_topic.assignment_events.id
 }
 
 output "dead_letter_topic" {
-  description = "Dead-letter topic for failed expense processing."
+  description = "Dead-letter topic for failed assignment processing."
   value       = google_pubsub_topic.dead_letter.id
 }
 
@@ -38,6 +33,6 @@ output "trigger_endpoint" {
 }
 
 output "alert_policy" {
-  description = "Cloud Monitoring alert policy for expense reviews."
-  value       = google_monitoring_alert_policy.expense_reviews.display_name
+  description = "Cloud Monitoring alert policy for high-priority task reminders."
+  value       = google_monitoring_alert_policy.task_reminders.display_name
 }

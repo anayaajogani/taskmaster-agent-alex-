@@ -26,13 +26,7 @@ variable "region" {
 variable "backend_service_name" {
   description = "Name of the backend Cloud Run service (ADK agent)."
   type        = string
-  default     = "ambient-expense-agent"
-}
-
-variable "frontend_service_name" {
-  description = "Name of the frontend Cloud Run service (approval UI)."
-  type        = string
-  default     = "expense-approval-ui"
+  default     = "taskmaster-agent"
 }
 
 variable "agent_name" {
@@ -46,17 +40,23 @@ variable "backend_image" {
   type        = string
 }
 
-variable "frontend_image" {
-  description = "Container image URI for the frontend Cloud Run service."
-  type        = string
-}
-
 variable "notification_email" {
-  description = "Email address for expense review alert notifications."
+  description = "Email address for task reminder alert notifications."
   type        = string
 
   validation {
     condition     = can(regex("^[^@]+@[^@]+$", var.notification_email))
     error_message = "A valid email address is required for notification_email."
   }
+}
+
+variable "gcal_token_secret" {
+  description = <<-EOT
+    Name of the Secret Manager secret holding the pre-minted Google Calendar
+    OAuth token (JSON), created once locally per docs/setup_guide.md. Cloud
+    Run has no browser for the interactive auth flow, so this is injected
+    as an env var rather than a token file.
+  EOT
+  type        = string
+  default     = "gcal-token"
 }

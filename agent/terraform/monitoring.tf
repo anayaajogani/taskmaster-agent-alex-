@@ -15,21 +15,23 @@
 # ---------------------------------------------------------------------------
 # Cloud Monitoring: log-based metric + alert policy + notification channel
 #
-# When the agent flags an expense >= $100 for review it emits a structured
-# JSON log. Cloud Logging ingests it, a log-based metric counts it, and
-# an alert policy sends an email notification.
+# When the graph routes a task HIGH_PRIORITY, reminder_agent emits a
+# structured JSON log with alert_type="task_reminder" (expense_agent/
+# agent.py:emit_reminder_alert). Cloud Logging ingests it, a log-based
+# metric counts it, and an alert policy emails the student. This is the
+# second consequential action in the demo, alongside the calendar write.
 # ---------------------------------------------------------------------------
 
-resource "google_logging_metric" "expense_reviews" {
-  name    = "expense-review-alerts"
+resource "google_logging_metric" "task_reminders" {
+  name    = "task-reminder-alerts"
   project = var.project_id
 
-  description = "Counts expense review alerts from the expense agent."
+  description = "Counts high-priority task reminder alerts from the taskmaster agent."
 
   filter = <<-EOT
     resource.type="cloud_run_revision"
     resource.labels.service_name="${var.backend_service_name}"
-    jsonPayload.alert_type="expense_review"
+    jsonPayload.alert_type="task_reminder"
   EOT
 
   metric_descriptor {
@@ -39,7 +41,7 @@ resource "google_logging_metric" "expense_reviews" {
 }
 
 resource "google_monitoring_notification_channel" "email" {
-  display_name = "Expense Agent - Review Alerts"
+  display_name = "Taskmaster Agent - Reminder Alerts"
   project      = var.project_id
   type         = "email"
 
@@ -50,16 +52,16 @@ resource "google_monitoring_notification_channel" "email" {
   depends_on = [google_project_service.apis]
 }
 
-resource "google_monitoring_alert_policy" "expense_reviews" {
-  display_name = "Expense Agent - High-Value Expense Review"
+resource "google_monitoring_alert_policy" "task_reminders" {
+  display_name = "Taskmaster Agent - High-Priority Task Reminder"
   project      = var.project_id
   combiner     = "OR"
 
   conditions {
-    display_name = "Expense review count > 0"
+    display_name = "Task reminder count > 0"
 
     condition_threshold {
-      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.expense_reviews.name}\" AND resource.type=\"cloud_run_revision\""
+      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.task_reminders.name}\" AND resource.type=\"cloud_run_revision\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
@@ -77,15 +79,20 @@ resource "google_monitoring_alert_policy" "expense_reviews" {
 
   documentation {
     content   = <<-EOT
-## Expense Review Required
+## High-Priority Task Reminder
 
-One or more expenses of **$$100 or more** have been flagged for review by the ambient expense agent.
+A newly detected assignment scored high enough on urgency/grade-weight to
+get both a calendar work block and a reminder.
 
-### What to do
+### What happened
 
-1. **[Open the Approval UI](${google_cloud_run_v2_service.frontend.uri}/approval)** to review pending expenses
-2. Check the amount, submitter, category, and the LLM's risk assessment
-3. Click **Approve** or **Reject** — the agent will log your decision and resume the workflow
+1. The agent estimated effort with Gemini and scored the task deterministically
+2. It scheduled a work block on the "Taskmaster" Google Calendar
+3. Because the score crossed the high-priority threshold, it also logged this alert
+
+Check the "Taskmaster" Google Calendar for the new block, or Cloud Logging
+(`jsonPayload.alert_type="task_reminder"`) for the full detail this alert
+was generated from.
 
 EOT
     mime_type = "text/markdown"
