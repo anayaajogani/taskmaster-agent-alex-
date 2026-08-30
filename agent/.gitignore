@@ -18,3 +18,5 @@ __pycache__/
 gcal_credentials.json
 gcal_token.json
 taskmaster_config.json
+exec -l */
+google-cloud-sdk/
