@@ -90,16 +90,36 @@ plausible range before it ever reaches the calendar (see below).
   deliveries with exponential backoff and routes anything that fails 5
   times to a dead-letter topic, instead of silently dropping it.
 
-## Two schedulers, on purpose
+## One scheduling brain, two triggers
 
 `expense_agent/calendar_tool.py` (called from the ADK graph, deployed on
 Cloud Run) and `expense_agent/taskmaster_calendar.py` (called from the local
-`run.py` loop) reuse the same auth, calendar lookup, and color logic —
-`calendar_tool.py` is deliberately thin and imports its helpers from
-`taskmaster_calendar.py` rather than reimplementing them. The local loop
-additionally does capacity-aware multi-block placement across a whole task
-list (daily hour caps, off-days) for a richer dashboard view; the Cloud Run
-path places one block per task as it arrives via Pub/Sub.
+`run.py` loop) share the *exact same* placement algorithm —
+`taskmaster_calendar._plan_blocks_for_task` — not a simplified copy of it.
+Effort padding, syllabus difficulty multipliers, grade weight, lead-time
+pacing, multi-block splitting (a big task becomes several ≤3h blocks), and
+the daily-hour cap all apply on both paths identically.
+
+The two callers differ only in how they know what capacity is already
+spoken for on a given day:
+
+- `taskmaster_calendar.py`'s local batch scheduler sees every task in one
+  run and shares a plain in-memory dict across all of them.
+- `calendar_tool.py` is triggered one task at a time via Pub/Sub, with no
+  batch to share state through — so it asks the live calendar itself how
+  many agent-created hours are already on a given day
+  (`_LiveDayCapacity`), getting the same answer a different way.
+
+`calendar_tool.py` additionally checks the student's real `primary`
+calendar for conflicts (`freebusy`) before accepting a slot — the local
+batch scheduler has never done this, and still doesn't; that's an
+intentional, additive difference, not something lost in translation.
+
+Because one task can now need several blocks, and that number can change
+between runs (a bigger or smaller effort re-estimate, more or less budget
+left before the deadline), each block is stamped with `source_ref` +
+`block_index`; re-processing a task patches its existing blocks, inserts
+any new ones it now needs, and deletes any it no longer needs.
 
 **Where blocks land is a config choice, not two competing files.**
 `taskmaster_config.json`'s `calendar_target` (set via `onboarding.py`) is

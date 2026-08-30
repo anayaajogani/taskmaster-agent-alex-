@@ -278,53 +278,90 @@ def _advance_to_workable(cursor: dt.datetime, cfg) -> dt.datetime:
     return cursor
 
 
-def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
-    briefing = []
+def _plan_blocks_for_task(task, cfg, cap: float, per_day, conflict_free=None):
+    """Split one task's budgeted hours into <=MAX_BLOCK_HOURS chunks across
+    work days, respecting lead_time_days pacing and a shared per-day
+    capacity cap. This is the scheduling "brain" — the one place effort
+    padding, syllabus difficulty, grade weight (via ``_budget_hours``),
+    lead-time pacing, and daily capacity all combine — and it's shared by
+    both callers so there's exactly one algorithm, not two.
+
+    ``per_day`` is a mutable mapping (date -> hours already committed that
+    day) this function reads AND updates as it places blocks. Pass a fresh
+    ``defaultdict(float)`` per batch run (see ``_place_blocks`` below) so
+    every task in that run shares the same day-by-day accounting, as the
+    original single-file version did. ``calendar_tool.py`` passes a
+    mapping backed by a live calendar query instead, since tasks arrive
+    one at a time via Pub/Sub with no in-memory batch to share state
+    through.
+
+    ``conflict_free(start, end) -> bool``, if given, gates each candidate
+    slot against something else too (e.g. the student's real calendar
+    busy time). The batch scheduler has never done this and still
+    doesn't by default (pass ``None`` — the default) to keep its behavior
+    unchanged; ``calendar_tool.py`` supplies one.
+
+    Returns ``(blocks, remaining)`` — the placed ``(start, end)`` tuples in
+    order, and however many hours of the budget didn't fit before the
+    deadline (0 if fully scheduled).
+    """
     lead = dt.timedelta(days=cfg.get("lead_time_days", 5))
-    cap = cfg.get("daily_cap_hours", 4)
     start_h = cfg.get("work_day_start", 9)
     end_h = cfg.get("work_day_end", 21)
-    per_day: dict = defaultdict(float)
+    total = _budget_hours(task, cfg)
+    remaining = total
+    due_local = task.due_at.astimezone()
 
     now_cursor = dt.datetime.now().astimezone().replace(
         minute=0, second=0, microsecond=0
     ) + dt.timedelta(hours=1)
+    earliest = max(now_cursor, min(due_local - lead, due_local - dt.timedelta(hours=total)))
+    cursor = _advance_to_workable(max(now_cursor, earliest), cfg)
+
+    blocks: list[tuple[dt.datetime, dt.datetime]] = []
+    guard = 0
+    while remaining > 0 and guard < 500:
+        guard += 1
+        cursor = _advance_to_workable(cursor, cfg)
+        if cursor >= due_local:
+            break
+        day_key = cursor.date()
+        room_today = cap - per_day[day_key]
+        if room_today <= 0:
+            cursor = _advance_to_workable(
+                (cursor + dt.timedelta(days=1)).replace(hour=start_h, minute=0), cfg
+            )
+            continue
+        chunk = min(remaining, MAX_BLOCK_HOURS, room_today, end_h - cursor.hour)
+        if chunk <= 0:
+            cursor = _advance_to_workable(
+                (cursor + dt.timedelta(days=1)).replace(hour=start_h, minute=0), cfg
+            )
+            continue
+        end = cursor + dt.timedelta(hours=chunk)
+        if conflict_free is not None and not conflict_free(cursor, end):
+            # Something's already there — try a later hour the same day
+            # rather than giving up on the whole day.
+            cursor = _advance_to_workable(cursor + dt.timedelta(hours=1), cfg)
+            continue
+        blocks.append((cursor, end))
+        per_day[day_key] += chunk
+        remaining -= chunk
+        cursor = end
+    return blocks, remaining
+
+
+def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
+    briefing = []
+    cap = cfg.get("daily_cap_hours", 4)
+    per_day: dict = defaultdict(float)
 
     for task in tasks_sorted:
         total = _budget_hours(task, cfg)
-        remaining = total
         due_local = task.due_at.astimezone()
+        blocks, remaining = _plan_blocks_for_task(task, cfg, cap, per_day)
 
-        earliest = max(
-            now_cursor,
-            min(due_local - lead, due_local - dt.timedelta(hours=total)),
-        )
-        block_cursor = _advance_to_workable(max(now_cursor, earliest), cfg)
-
-        placed = 0
-        guard = 0
-        while remaining > 0 and guard < 300:
-            guard += 1
-            block_cursor = _advance_to_workable(block_cursor, cfg)
-            if block_cursor >= due_local:
-                break
-            day_key = block_cursor.date()
-            room_today = cap - per_day[day_key]
-            if room_today <= 0:
-                block_cursor = _advance_to_workable(
-                    (block_cursor + dt.timedelta(days=1)).replace(hour=start_h, minute=0),
-                    cfg,
-                )
-                continue
-            chunk = min(remaining, MAX_BLOCK_HOURS, room_today, end_h - block_cursor.hour)
-            if chunk <= 0:
-                block_cursor = _advance_to_workable(
-                    (block_cursor + dt.timedelta(days=1)).replace(hour=start_h, minute=0),
-                    cfg,
-                )
-                continue
-            start = block_cursor
-            end = start + dt.timedelta(hours=chunk)
+        for start, end in blocks:
             service.events().insert(calendarId=cal_id, body={
                 "summary": f"Work: {task.title} ({task.course})",
                 "description": (
@@ -335,10 +372,6 @@ def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
                 "end": {"dateTime": end.isoformat()},
                 "colorId": _pick_color(task, cfg, due_local),
             }).execute()
-            per_day[day_key] += chunk
-            remaining -= chunk
-            placed += 1
-            block_cursor = end
 
         briefing.append({
             "title": task.title,
@@ -346,7 +379,7 @@ def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
             "due": f"{due_local:%a %b %d %I:%M %p}",
             "rank": task.priority_score,
             "budgeted_hours": total,
-            "blocks": placed,
+            "blocks": len(blocks),
             "fully_scheduled": remaining <= 0,
             "priority_course": _is_priority_course(task, cfg),
             "from_syllabus": task.source == "syllabus",
