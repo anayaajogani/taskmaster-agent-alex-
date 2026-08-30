@@ -36,8 +36,10 @@ from google.adk import Agent, Context, Event, Workflow
 from .calendar_tool import schedule_block
 from .config import config
 from .models import Task
+from .onboarding import load_config
 from .scoring import score_task, is_high_priority
 from .prompts import EFFORT_ESTIMATOR_INSTRUCTION
+from .taskmaster_calendar import _is_excluded
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +91,9 @@ def estimate_and_score(node_input: dict, ctx: Context) -> Event:
 
     The effort estimate is produced by ``effort_agent`` upstream and stored
     on the task. Here we finalize the score and decide the path:
-    ``HIGH_PRIORITY`` (schedule + remind) vs ``QUIET`` (schedule only).
+    ``HIGH_PRIORITY`` (schedule + remind), ``QUIET`` (schedule only), or
+    ``EXCLUDED`` (the student told onboarding to ignore this course —
+    e.g. one they tutor — so it's not scheduled or scored at all).
     """
     # Build a Task from the parsed fields.
     try:
@@ -115,6 +119,11 @@ def estimate_and_score(node_input: dict, ctx: Context) -> Event:
         estimate_confidence=ctx.state.get("estimate_confidence"),
     )
 
+    cfg = load_config()
+    ctx.state["task"] = json.loads(task.model_dump_json())
+    if _is_excluded(task, cfg):
+        return Event(route="EXCLUDED", output=ctx.state["task"])
+
     task.priority_score = score_task(task)
     ctx.state["task"] = json.loads(task.model_dump_json())
 
@@ -123,8 +132,28 @@ def estimate_and_score(node_input: dict, ctx: Context) -> Event:
     return Event(route="QUIET", output=ctx.state["task"])
 
 
+def skip_excluded(node_input: dict) -> Event:
+    """A task from a course the student told onboarding to ignore (e.g.
+    one they tutor or TA for, in a way Canvas's own enrollment role
+    doesn't catch). No calendar write, no score, no reminder — matches
+    ``taskmaster_calendar.rebuild_calendar_and_brief``'s ``skipped`` list
+    for the local batch scheduler. Without this node, only that batch
+    path respected exclusions; the Pub/Sub-triggered path would schedule
+    the excluded course anyway.
+    """
+    log_entry = {
+        "severity": "INFO",
+        "message": f"Task excluded, not scheduled: {node_input.get('title')} ({node_input.get('course')})",
+        "decision": "excluded",
+        "title": node_input.get("title"),
+        "course": node_input.get("course"),
+    }
+    print(json.dumps(log_entry), flush=True)
+    return Event(output={"status": "excluded", **node_input})
+
+
 def schedule_quietly(node_input: dict) -> Event:
-    """Low-priority task: write the calendar block, log it, no nag."""
+    """Low-priority task: write the calendar block(s), log it, no nag."""
     result = schedule_block(
         title=node_input.get("title", "Untitled task"),
         course=node_input.get("course") or "",
@@ -132,12 +161,15 @@ def schedule_quietly(node_input: dict) -> Event:
         estimated_hours=node_input.get("estimated_hours"),
         source_ref=node_input.get("source_ref", ""),
         priority_score=node_input.get("priority_score", 0),
+        points_possible=node_input.get("points_possible"),
+        course_total_points=node_input.get("course_total_points"),
     )
     log_entry = {
         "severity": "INFO",
         "message": (
             f"Task scheduled quietly: {node_input.get('title')} "
-            f"(score {node_input.get('priority_score')}) -> {result.get('status')}"
+            f"(score {node_input.get('priority_score')}) -> {result.get('status')}, "
+            f"{result.get('blocks')} block(s), fully_scheduled={result.get('fully_scheduled')}"
         ),
         "decision": "scheduled",
         "title": node_input.get("title"),
@@ -147,6 +179,46 @@ def schedule_quietly(node_input: dict) -> Event:
     }
     print(json.dumps(log_entry), flush=True)
     return Event(output={"status": "scheduled", "calendar": result, **node_input})
+
+
+def schedule_and_flag(node_input: dict) -> Event:
+    """High-priority task: write the calendar block(s) deterministically,
+    then hand off to reminder_agent for just the alert.
+
+    Scheduling is a consequential action with an idempotency guarantee to
+    uphold (see calendar_tool.py) — it belongs in code, not delegated to
+    an LLM asked to remember to make two separate tool calls in the right
+    order every time. An earlier version had reminder_agent call both
+    `schedule_block` and `emit_reminder_alert` itself; in practice it
+    sometimes only made one of the two calls, which is exactly the
+    reliability problem this file's own docstring warns about — business
+    rules stay in code, the LLM only judges.
+    """
+    result = schedule_block(
+        title=node_input.get("title", "Untitled task"),
+        course=node_input.get("course") or "",
+        due_at=node_input.get("due_at", ""),
+        estimated_hours=node_input.get("estimated_hours"),
+        source_ref=node_input.get("source_ref", ""),
+        priority_score=node_input.get("priority_score", 0),
+        points_possible=node_input.get("points_possible"),
+        course_total_points=node_input.get("course_total_points"),
+    )
+    log_entry = {
+        "severity": "INFO",
+        "message": (
+            f"High-priority task scheduled: {node_input.get('title')} "
+            f"-> {result.get('status')}, {result.get('blocks')} block(s), "
+            f"fully_scheduled={result.get('fully_scheduled')}"
+        ),
+        "decision": "scheduled_high_priority",
+        "title": node_input.get("title"),
+        "course": node_input.get("course"),
+        "priority_score": node_input.get("priority_score"),
+        "calendar": result,
+    }
+    print(json.dumps(log_entry), flush=True)
+    return Event(output={"calendar": result, **node_input})
 
 
 def emit_reminder_alert(
@@ -254,15 +326,11 @@ reminder_agent = Agent(
     name="reminder_agent",
     model=config.model,
     mode="single_turn",
-    instruction="""You handle a high-priority student task that needs both a
-calendar block and a reminder.
-
-First call `schedule_block` with the task's title, course, due_at,
-estimated_hours, source_ref, and priority_score from the input, to put a
-work block on the calendar. Then call `emit_reminder_alert` with the
-task's title, course, due_at, priority_score, and estimated_hours. Then
-return a one-line confirmation. Do not add commentary.""",
-    tools=[schedule_block, emit_reminder_alert],
+    instruction="""You handle a high-priority student task that needs a reminder.
+Call the `emit_reminder_alert` tool with the task's title, course, due_at,
+priority_score, and estimated_hours from the input. Then return a one-line
+confirmation. Do not add commentary.""",
+    tools=[emit_reminder_alert],
 )
 
 
@@ -278,8 +346,10 @@ root_agent = Workflow(
             estimate_and_score,
             {
                 "QUIET": schedule_quietly,
-                "HIGH_PRIORITY": reminder_agent,
+                "HIGH_PRIORITY": schedule_and_flag,
+                "EXCLUDED": skip_excluded,
             },
         ),
+        (schedule_and_flag, reminder_agent),
     ],
 )
