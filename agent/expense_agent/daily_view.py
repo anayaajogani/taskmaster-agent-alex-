@@ -107,6 +107,7 @@ def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=
             "score": b.get("rank") or 0,
             "from_syllabus": b.get("from_syllabus", False),
             "priority_course": b.get("priority_course", False),
+            "work_type": b.get("work_type", "coursework"),
             "overdue_start": start.date() < today,
         }
 
@@ -138,6 +139,14 @@ def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=
         view["study_plan"] = build_study_plan(view, cfg)
     except Exception:
         view["study_plan"] = None
+
+    # Scheduled blocks + deadlines, so the page can draw a calendar that
+    # matches the task list exactly.
+    try:
+        from .calendar_view import build_calendar_view
+        view["calendar"] = build_calendar_view()
+    except Exception:
+        view["calendar"] = None
 
     DAILY_JSON.write_text(json.dumps(view, indent=2, default=str))
     return view
@@ -249,6 +258,7 @@ if __name__ == "__main__":
             "budgeted_hours": _budget_hours(t, cfg),
             "from_syllabus": t.source == "syllabus",
             "priority_course": _is_priority_course(t, cfg),
+            "work_type": getattr(t, "work_type", "coursework"),
         })
 
     try:

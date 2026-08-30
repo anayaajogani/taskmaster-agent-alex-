@@ -81,6 +81,7 @@ def refresh_data(verbose: bool = True) -> dict | None:
             "budgeted_hours": _budget_hours(t, cfg),
             "from_syllabus": t.source == "syllabus",
             "priority_course": _is_priority_course(t, cfg),
+            "work_type": getattr(t, "work_type", "coursework"),
         })
 
     materials = fetch_materials()
@@ -141,15 +142,8 @@ def _serve(port: int) -> None:
             self.wfile.write(payload)
 
     handler = functools.partial(Handler, directory=str(_AGENT_ROOT))
-
-    class Server(socketserver.ThreadingTCPServer):
-        allow_reuse_address = True
-        daemon_threads = True
-
-        def handle_error(self, request, client_address):
-            pass  # browser closed early; not worth a traceback
-
-    with Server(("", port), handler) as httpd:
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.TCPServer(("", port), handler) as httpd:
         httpd.serve_forever()
 
 

@@ -67,12 +67,17 @@ COLOR_LATER = "10"      # green  - further out
 COLOR_PRIORITY = "3"    # purple - a course the student flagged as priority
 
 
+COLOR_TEACHING = "9"    # blueberry - work you owe students, not graded work
+
+
 def _pick_color(task, cfg, due_local: dt.datetime) -> str:
     """Color-code blocks so the calendar is readable at a glance.
 
     Priority courses get their own color; everything else is colored by how
     soon it's due, so red always means 'this is the fire'.
     """
+    if getattr(task, "work_type", "coursework") == "teaching":
+        return COLOR_TEACHING
     if _is_priority_course(task, cfg):
         return COLOR_PRIORITY
     days_out = (due_local - dt.datetime.now().astimezone()).total_seconds() / 86400
@@ -197,10 +202,19 @@ def _is_priority_course(task, cfg) -> bool:
 
 
 def _rank_value(task, cfg) -> float:
-    """Ranking driven by the student's stated priority_mode."""
+    """Ranking driven by the student's stated priority_mode.
+
+    Teaching work (grading, prep) is ranked on urgency alone — "worth more of
+    my grade" is meaningless for a course you TA, so applying the student's
+    grade-weighting to it would be nonsense.
+    """
     now = dt.datetime.now(dt.timezone.utc)
     hours_left = max((task.due_at - now).total_seconds() / 3600, 1.0)
     urgency = 24.0 / hours_left
+
+    if getattr(task, "work_type", "coursework") == "teaching":
+        # Deadlines you owe other people are real, but they aren't graded work.
+        return round(urgency * 1.5, 4)
 
     if task.points_possible and task.course_total_points:
         grade = task.points_possible / task.course_total_points
@@ -338,14 +352,22 @@ def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
             "fully_scheduled": remaining <= 0,
             "priority_course": _is_priority_course(task, cfg),
             "from_syllabus": task.source == "syllabus",
+            "work_type": getattr(task, "work_type", "coursework"),
         })
     return briefing
 
 
 def _dedupe_key(task) -> str:
-    """Loose key so a Canvas assignment and its syllabus mention collapse."""
+    """Collapse a Canvas assignment and its syllabus mention into one task.
+
+    Keyed on title + course, NOT the due date: the syllabus often gives a
+    slightly different time than Canvas (4:59pm vs 7:00pm for the same exam),
+    and two assignments with the same name in the same course are the same
+    thing regardless.
+    """
     title = re.sub(r"[^a-z0-9]+", " ", (task.title or "").lower()).strip()
-    return f"{title}|{(task.course or '')[:20].lower()}"
+    course = re.sub(r"[^a-z0-9]+", " ", (task.course or "").lower()).strip()[:24]
+    return f"{title}|{course}"
 
 
 def rebuild_calendar_and_brief():
@@ -390,6 +412,7 @@ def rebuild_calendar_and_brief():
             "fully_scheduled": False,
             "priority_course": _is_priority_course(t, cfg),
             "from_syllabus": t.source == "syllabus",
+            "work_type": getattr(t, "work_type", "coursework"),
         } for t in kept]
         return briefing, skipped + auto_skipped, cfg
 
@@ -412,7 +435,7 @@ def print_briefing(briefing, skipped, cfg) -> None:
     for i, b in enumerate(briefing, 1):
         flag = "OK   " if b["fully_scheduled"] else "TIGHT"
         star = "*" if b["priority_course"] else " "
-        src = "S" if b.get("from_syllabus") else " "
+        src = "T" if b.get("work_type") == "teaching" else ("S" if b.get("from_syllabus") else " ")
         print(f"{i:>2}.{star}{src}[{flag}] {b['title'][:32]:<32} | {(b['course'] or '')[:16]:<16} "
               f"| due {b['due']:<19} | {b['budgeted_hours']}h/{b['blocks']} blk")
 
@@ -434,7 +457,7 @@ def print_briefing(briefing, skipped, cfg) -> None:
     print("\n  Calendar colors:  RED = due <2 days   ORANGE = <5 days   "
           "YELLOW = <2 weeks\n                    GREEN = later      "
           "PURPLE = priority course")
-    print("  Markers: * = priority course   S = found in syllabus (not in Canvas)")
+    print("  Markers: * = priority course   S = from syllabus   T = teaching work (you TA/tutor)")
     print("=" * 78 + "\n")
 
 

@@ -1,0 +1,139 @@
+{
+  "generated_at": "2026-08-30T12:11:57.369331-07:00",
+  "calendar_name": "Taskmaster",
+  "events": [
+    {
+      "title": "Work: Who Got Funded - Week 2 (Technology Entrepreneurship (Fall 2026))",
+      "start": "2026-08-30T13:00:00-07:00",
+      "end": "2026-08-30T15:54:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.2979. Due Fri Sep 04 01:00 PM.",
+      "color_id": "9"
+    },
+    {
+      "title": "Work: Reflection Paper - EcoWash (Technology Entrepreneurship (Fall 2026))",
+      "start": "2026-08-30T14:00:00-07:00",
+      "end": "2026-08-30T15:06:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.2954. Due Fri Sep 04 02:00 PM.",
+      "color_id": "9"
+    },
+    {
+      "title": "Work: Reflection Paper - EcoWash (Technology Entrepreneurship (Fall 2026))",
+      "start": "2026-08-31T09:00:00-07:00",
+      "end": "2026-08-31T10:48:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.2954. Due Fri Sep 04 02:00 PM.",
+      "color_id": "9"
+    },
+    {
+      "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
+      "start": "2026-09-19T16:59:00-07:00",
+      "end": "2026-09-19T19:53:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.0575. Due Thu Sep 24 04:59 PM.",
+      "color_id": "10"
+    },
+    {
+      "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
+      "start": "2026-09-19T19:00:00-07:00",
+      "end": "2026-09-19T20:06:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.0573. Due Thu Sep 24 07:00 PM.",
+      "color_id": "10"
+    },
+    {
+      "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
+      "start": "2026-09-20T09:00:00-07:00",
+      "end": "2026-09-20T10:48:00-07:00",
+      "description": "Auto-scheduled by Taskmaster. Rank 0.0573. Due Thu Sep 24 07:00 PM.",
+      "color_id": "10"
+    }
+  ],
+  "deadlines": [
+    {
+      "title": "Who Got Funded - Week 2",
+      "course": "Technology Entrepreneurship (Fall 2026)",
+      "due_label": "Fri Sep 04 01:00 PM",
+      "hours": 2.9,
+      "from_syllabus": false,
+      "priority_course": false
+    },
+    {
+      "title": "Reflection Paper - EcoWash",
+      "course": "Technology Entrepreneurship (Fall 2026)",
+      "due_label": "Fri Sep 04 02:00 PM",
+      "hours": 2.9,
+      "from_syllabus": false,
+      "priority_course": false
+    },
+    {
+      "title": "Midterm 1",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Thu Sep 24 04:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Midterm 1",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Thu Sep 24 07:00 PM",
+      "hours": 2.9,
+      "from_syllabus": false,
+      "priority_course": false
+    },
+    {
+      "title": "Research Project Application (Alternative to Final Exam)",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Fri Oct 09 04:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Midterm 2",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Thu Oct 29 07:00 PM",
+      "hours": 2.9,
+      "from_syllabus": false,
+      "priority_course": false
+    },
+    {
+      "title": "Midterm 2",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Thu Oct 29 04:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Research Project Outline & Annotated Bibliography",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Fri Oct 30 04:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Research Project Rough Draft",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Mon Nov 23 03:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Final Exam",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Tue Dec 15 03:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    },
+    {
+      "title": "Research Project Final Draft",
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "due_label": "Tue Dec 15 03:59 PM",
+      "hours": 2.9,
+      "from_syllabus": true,
+      "priority_course": false
+    }
+  ],
+  "has_calendar_access": true
+}

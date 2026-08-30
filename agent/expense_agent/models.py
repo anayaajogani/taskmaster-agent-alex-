@@ -19,6 +19,15 @@ class Task(BaseModel):
     """A single actionable student task, normalized across sources."""
 
     source: str = Field(description="Origin of the task, e.g. 'canvas', 'gmail'.")
+    work_type: str = Field(
+        default="coursework",
+        description=(
+            "'coursework' = work you do as a student. 'teaching' = work you do "
+            "because you TA/tutor/teach the course (grading, prep, sessions). "
+            "Both are real demands on your time, but they're different kinds of "
+            "work and shouldn't be scored the same way."
+        ),
+    )
     source_ref: str = Field(
         description="Stable unique ID from the source. Used for dedupe so the "
         "same assignment isn't scheduled twice."

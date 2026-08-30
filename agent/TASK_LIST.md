@@ -1,18 +1,22 @@
 # Task List
 
-_Updated Sat Aug 29, 03:28 PM_
+_Updated Sun Aug 30, 12:09 PM_
 
 Prioritizing by **grade** · max **4h/day** · working **9:00–21:00**
 
 | # | Task | Course | Due | Budgeted | Blocks | Status |
 |---|------|--------|-----|----------|--------|--------|
-| 1 | Midterm 1 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Sep 24 07:00 PM | 2.9h | 2 | scheduled |
-| 2 | Research Project Application (Alternative to Final Exam) | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Fri Oct 09 04:59 PM | 2.9h | 1 | scheduled |
-| 3 | Midterm 2 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Oct 29 07:00 PM | 2.9h | 2 | scheduled |
-| 4 | Research Project Outline & Annotated Bibliography | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Fri Oct 30 04:59 PM | 2.9h | 1 | scheduled |
-| 5 | Research Project Rough Draft | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Mon Nov 23 03:59 PM | 2.9h | 1 | scheduled |
-| 6 | Final Exam | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Tue Dec 15 03:59 PM | 2.9h | 1 | scheduled |
-| 7 | Research Project Final Draft | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Tue Dec 15 03:59 PM | 2.9h | 2 | scheduled |
+| 1 | Who Got Funded - Week 2 | Technology Entrepreneurship (Fall 2026) | Fri Sep 04 01:00 PM | 2.9h | 1 | scheduled |
+| 2 | Reflection Paper - EcoWash | Technology Entrepreneurship (Fall 2026) | Fri Sep 04 02:00 PM | 2.9h | 2 | scheduled |
+| 3 | Midterm 1 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Sep 24 04:59 PM | 2.9h | 1 | scheduled |
+| 4 | Midterm 1 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Sep 24 07:00 PM | 2.9h | 2 | scheduled |
+| 5 | Research Project Application (Alternative to Final Exam) | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Fri Oct 09 04:59 PM | 2.9h | 1 | scheduled |
+| 6 | Midterm 2 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Oct 29 07:00 PM | 2.9h | 2 | scheduled |
+| 7 | Midterm 2 | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Thu Oct 29 04:59 PM | 2.9h | 2 | scheduled |
+| 8 | Research Project Outline & Annotated Bibliography | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Fri Oct 30 04:59 PM | 2.9h | 2 | scheduled |
+| 9 | Research Project Rough Draft | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Mon Nov 23 03:59 PM | 2.9h | 1 | scheduled |
+| 10 | Final Exam | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Tue Dec 15 03:59 PM | 2.9h | 1 | scheduled |
+| 11 | Research Project Final Draft | Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026) | Tue Dec 15 03:59 PM | 2.9h | 2 | scheduled |
 
 ## Ignored
 
@@ -22,9 +26,6 @@ Prioritizing by **grade** · max **4h/day** · working **9:00–21:00**
 - Paper Four (Special Topics in American Cultures (Fall 2026))
 - Attendance (Special Topics in American Cultures (Fall 2026))
 - Golden Shovel (Special Topics in American Cultures (Fall 2026))
-- Directed Group Study for Freshmen and Sophomores (Fall 2025) (you are teacher)
-- Directed Group Study for Freshmen and Sophomores (Spring 2026) (you are teacher)
-- Technology Entrepreneurship (Fall 2026) (you are ta)
 
 ## Check manually (not on Canvas)
 

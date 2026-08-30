@@ -132,6 +132,7 @@
   .tag-syl { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
   .tag-pri { color: var(--med); border-color: color-mix(in srgb, var(--med) 40%, transparent); }
   .tag-late { color: var(--high); border-color: color-mix(in srgb, var(--high) 45%, transparent); }
+  .tag-teach { color: #6FA8FF; border-color: color-mix(in srgb, #6FA8FF 45%, transparent); }
 
   /* ---------- runway: the signature element ---------- */
   .runway { position: relative; }
@@ -179,6 +180,114 @@
   .later-row:last-child { border-bottom: none; }
   .later-when { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
   .later-course { color: var(--muted); font-size: 12px; }
+
+  /* ---------- calendar ---------- */
+  /* Colors are the SAME tiers as the task list, so the two views can't drift. */
+  .cal { margin-bottom: 44px; }
+  .cal-nav {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .cal-btn {
+    background: var(--raised);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cal-btn:hover { border-color: var(--accent); }
+  .cal-range {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .cal-day {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    min-height: 118px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cal-day.today { border-color: var(--accent); }
+  .cal-day.past { opacity: 0.45; }
+  .cal-dow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .cal-date {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .cal-day.today .cal-date { color: var(--accent); }
+  .cal-block {
+    font-size: 10.5px;
+    line-height: 1.3;
+    padding: 3px 5px;
+    border-radius: 4px;
+    border-left: 3px solid;
+    background: var(--raised);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cal-due {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px dashed;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .cal-legend i {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 5px;
+  }
+  .cal-empty {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 22px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 700px) {
+    .cal-grid { grid-template-columns: repeat(4, 1fr); }
+    .cal-day { min-height: 92px; }
+  }
 
   /* ---------- study plan ---------- */
   .plan { margin-bottom: 40px; }
@@ -431,11 +540,156 @@ function Task({ task, today, color }) {
         <span>·</span>
         <span>{dueText(task.days_left)}</span>
         {task.priority_course && <span className="tag tag-pri">priority course</span>}
+        {task.work_type === "teaching" && <span className="tag tag-teach">teaching</span>}
         {task.from_syllabus && <span className="tag tag-syl">from syllabus</span>}
         {task.overdue_start && <span className="tag tag-late">start date passed</span>}
       </div>
       <Runway task={task} today={today} color={color} />
     </div>
+  );
+}
+
+// One colour scale, shared by the calendar and the task list, so the two
+// views always agree about what "urgent" looks like.
+const TIER_COLOR = {
+  critical: "var(--high)",
+  soon:     "var(--med)",
+  upcoming: "#E8D44D",
+  later:    "var(--low)",
+  priority: "var(--accent)",
+  teaching: "#6FA8FF",
+};
+
+// Google Calendar colorIds -> our tiers (taskmaster_calendar.py writes these).
+const COLOR_ID_TIER = {
+  "11": "critical", "6": "soon", "5": "upcoming", "10": "later", "3": "priority", "9": "teaching",
+};
+
+function tierForDate(due) {
+  const days = (due - new Date()) / 86400000;
+  if (days <= 2) return "critical";
+  if (days <= 5) return "soon";
+  if (days <= 14) return "upcoming";
+  return "later";
+}
+
+function Calendar({ data }) {
+  const [offset, setOffset] = useState(0);   // weeks from this one
+  if (!data) return null;
+
+  const events = data.events || [];
+  const deadlines = data.deadlines || [];
+
+  // Build the 7 days of the shown week, starting Sunday.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay() + offset * 7);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d;
+  });
+
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  // Deadlines carry a formatted label ("Thu Sep 24 07:00 PM"); parse to a date.
+  const parseDue = (label) => {
+    const d = new Date(label + " " + weekStart.getFullYear());
+    return isNaN(d) ? null : d;
+  };
+
+  const rangeLabel =
+    days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" }) +
+    " – " +
+    days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  const anythingThisWeek = days.some(d =>
+    events.some(e => sameDay(new Date(e.start), d)) ||
+    deadlines.some(dl => { const p = parseDue(dl.due_label); return p && sameDay(p, d); })
+  );
+
+  return (
+    <section className="cal">
+      <div className="tier-head">
+        <span className="dot" style={{ background: "var(--accent)" }} />
+        <span className="tier-name" style={{ color: "var(--accent)" }}>Calendar</span>
+        <span className="tier-count">{events.length} blocks</span>
+      </div>
+
+      <div className="cal-nav">
+        <button className="cal-btn" onClick={() => setOffset(offset - 1)}>← prev</button>
+        <button className="cal-btn" onClick={() => setOffset(0)}>this week</button>
+        <button className="cal-btn" onClick={() => setOffset(offset + 1)}>next →</button>
+        <span className="cal-range">{rangeLabel}</span>
+      </div>
+
+      <div className="cal-grid">
+        {!anythingThisWeek && offset === 0 && (
+          <div className="cal-empty">
+            {data.has_calendar_access
+              ? "Nothing scheduled this week."
+              : "No calendar blocks yet — run the scheduler to fill this in."}
+          </div>
+        )}
+        {(anythingThisWeek || offset !== 0) && days.map((d, i) => {
+          const isToday = sameDay(d, today);
+          const isPast = d < today && !isToday;
+          const dayEvents = events.filter(e => sameDay(new Date(e.start), d));
+          const dayDue = deadlines.filter(dl => {
+            const p = parseDue(dl.due_label);
+            return p && sameDay(p, d);
+          });
+          return (
+            <div className={"cal-day" + (isToday ? " today" : "") + (isPast ? " past" : "")} key={i}>
+              <div className="cal-dow">
+                {d.toLocaleDateString(undefined, { weekday: "short" })}
+              </div>
+              <div className="cal-date">{d.getDate()}</div>
+
+              {dayDue.map((dl, j) => {
+                const tier = dl.priority_course ? "priority" : tierForDate(parseDue(dl.due_label));
+                return (
+                  <div className="cal-due" key={"d" + j}
+                       style={{ color: TIER_COLOR[tier], borderColor: TIER_COLOR[tier] }}
+                       title={dl.title + " due — " + (dl.course || "")}>
+                    DUE {dl.title}
+                  </div>
+                );
+              })}
+
+              {dayEvents.map((e, j) => {
+                const tier = COLOR_ID_TIER[e.color_id] || "upcoming";
+                const start = new Date(e.start);
+                const label = start.toLocaleTimeString(undefined,
+                  { hour: "numeric", minute: "2-digit" });
+                return (
+                  <div className="cal-block" key={"e" + j}
+                       style={{ borderLeftColor: TIER_COLOR[tier] }}
+                       title={e.title + "\n" + e.description}>
+                    {label} {e.title.replace(/^Work:\s*/, "").replace(/\s*\([^)]*\)\s*$/, "")}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="cal-legend">
+        <span><i style={{ background: TIER_COLOR.critical }} />due &lt;2 days</span>
+        <span><i style={{ background: TIER_COLOR.soon }} />&lt;5 days</span>
+        <span><i style={{ background: TIER_COLOR.upcoming }} />&lt;2 weeks</span>
+        <span><i style={{ background: TIER_COLOR.later }} />later</span>
+        <span><i style={{ background: TIER_COLOR.priority }} />priority course</span>
+        <span><i style={{ background: TIER_COLOR.teaching }} />teaching work</span>
+        <span>solid = work block · dashed = deadline</span>
+      </div>
+    </section>
   );
 }
 
@@ -671,6 +925,8 @@ function App() {
         </p>
       </header>
 
+      <Calendar data={data.calendar} />
+
       {active.length === 0 && (
         <div className="empty">
           <h3>Nothing to start today</h3>
@@ -708,7 +964,11 @@ function App() {
           {later.map((t, i) => (
             <div className="later-row" key={t.title + i}>
               <div>
-                <div>{t.title}</div>
+                <div>
+                  {t.title}
+                  {t.work_type === "teaching" &&
+                    <span className="tag tag-teach" style={{ marginLeft: 8 }}>teaching</span>}
+                </div>
                 <div className="later-course">{t.course}</div>
               </div>
               <div className="later-when">

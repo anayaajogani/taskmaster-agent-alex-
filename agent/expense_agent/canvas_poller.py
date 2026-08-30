@@ -73,27 +73,33 @@ def _parse_due(raw: str | None) -> datetime | None:
     return datetime.fromisoformat(raw.replace("Z", "+00:00"))
 
 
-def assignments_to_tasks(skip_teaching: bool = True) -> list[Task]:
+def assignments_to_tasks(skip_teaching: bool = False) -> list[Task]:
     """Pull every course's assignments and normalize to Task objects.
 
     Skips assignments with no due date and ones already past due.
 
-    If skip_teaching is True (default), courses where Canvas says you are a
-    TA/teacher are skipped entirely — those assignments are your students'
-    work, not yours. Courses where the enrollment doesn't reflect reality
-    (e.g. tutors enrolled as students) still need the manual exclusion list.
+    Courses where Canvas says you're a TA/teacher are KEPT but tagged
+    work_type="teaching" — grading and prep are real work, they're just a
+    different kind than your own coursework. Pass skip_teaching=True to drop
+    them entirely instead.
+
+    Note the manual exclusion list in the config still removes courses
+    outright; that's for cases Canvas gets wrong (e.g. tutors enrolled as
+    students).
     """
     tasks: list[Task] = []
-    skipped_teaching: list[str] = []
+    teaching_courses: list[str] = []
     now = datetime.now(timezone.utc)
 
     for course in fetch_active_courses():
         course_id = course.get("id")
         course_name = course.get("name") or course.get("course_code") or str(course_id)
 
-        if skip_teaching and is_teaching_role(course):
-            skipped_teaching.append(f"{course_name} (you are {course_role(course)})")
-            continue
+        teaches = is_teaching_role(course)
+        if teaches:
+            teaching_courses.append(f"{course_name} (you are {course_role(course)})")
+            if skip_teaching:
+                continue
 
         for a in fetch_assignments(course_id):
             due = _parse_due(a.get("due_at"))
@@ -103,6 +109,7 @@ def assignments_to_tasks(skip_teaching: bool = True) -> list[Task]:
             tasks.append(
                 Task(
                     source="canvas",
+                    work_type="teaching" if teaches else "coursework",
                     source_ref=str(a.get("id")),
                     title=a.get("name", "Untitled assignment"),
                     course=course_name,
@@ -113,10 +120,10 @@ def assignments_to_tasks(skip_teaching: bool = True) -> list[Task]:
                 )
             )
 
-    if skipped_teaching:
-        assignments_to_tasks.last_skipped_teaching = skipped_teaching  # type: ignore
-    else:
-        assignments_to_tasks.last_skipped_teaching = []  # type: ignore
+    assignments_to_tasks.last_skipped_teaching = (  # type: ignore
+        teaching_courses if skip_teaching else []
+    )
+    assignments_to_tasks.last_teaching_courses = teaching_courses  # type: ignore
     return tasks
 
 
