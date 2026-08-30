@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 
 from google.adk import Agent, Context, Event, Workflow
 
+from .calendar_tool import schedule_block
 from .config import config
 from .models import Task
 from .scoring import score_task, is_high_priority
@@ -44,11 +45,16 @@ from .prompts import EFFORT_ESTIMATOR_INSTRUCTION
 # ---------------------------------------------------------------------------
 
 
-def parse_task_event(node_input: str) -> Event:
+def parse_task_event(node_input: str, ctx: Context) -> Event:
     """Parse a Pub/Sub trigger event and extract task data.
 
     The Canvas poller publishes a Task JSON in the ``data`` field, which may
     be base64-encoded (real Pub/Sub) or plain JSON (local testing).
+
+    Stores the parsed task on ``ctx.state["parsed_task"]`` — this is the only
+    place it's written, and ``apply_effort_estimate`` is the only place that
+    reads it back to merge the LLM's estimate on top. Without this the effort
+    estimate has nothing to attach to and the task downstream is empty.
     """
     try:
         event = json.loads(node_input)
@@ -63,18 +69,18 @@ def parse_task_event(node_input: str) -> Event:
         except Exception:
             return Event(output={"error": f"Failed to decode data: {data[:200]}"})
 
-    return Event(
-        output={
-            "source": data.get("source", "canvas"),
-            "source_ref": str(data.get("source_ref", "")),
-            "title": data.get("title", "Untitled task"),
-            "course": data.get("course"),
-            "description": data.get("description") or "",
-            "due_at": data.get("due_at", ""),
-            "points_possible": data.get("points_possible"),
-            "course_total_points": data.get("course_total_points"),
-        }
-    )
+    parsed = {
+        "source": data.get("source", "canvas"),
+        "source_ref": str(data.get("source_ref", "")),
+        "title": data.get("title", "Untitled task"),
+        "course": data.get("course"),
+        "description": data.get("description") or "",
+        "due_at": data.get("due_at", ""),
+        "points_possible": data.get("points_possible"),
+        "course_total_points": data.get("course_total_points"),
+    }
+    ctx.state["parsed_task"] = parsed
+    return Event(output=parsed)
 
 
 def estimate_and_score(node_input: dict, ctx: Context) -> Event:
@@ -112,26 +118,35 @@ def estimate_and_score(node_input: dict, ctx: Context) -> Event:
     task.priority_score = score_task(task)
     ctx.state["task"] = json.loads(task.model_dump_json())
 
-    if is_high_priority(task, threshold=config.review_threshold):
+    if is_high_priority(task):  # scoring.PRIORITY_THRESHOLD is the single source of truth
         return Event(route="HIGH_PRIORITY", output=ctx.state["task"])
     return Event(route="QUIET", output=ctx.state["task"])
 
 
 def schedule_quietly(node_input: dict) -> Event:
-    """Low-priority task: log that it was scheduled, no nag."""
+    """Low-priority task: write the calendar block, log it, no nag."""
+    result = schedule_block(
+        title=node_input.get("title", "Untitled task"),
+        course=node_input.get("course") or "",
+        due_at=node_input.get("due_at", ""),
+        estimated_hours=node_input.get("estimated_hours"),
+        source_ref=node_input.get("source_ref", ""),
+        priority_score=node_input.get("priority_score", 0),
+    )
     log_entry = {
         "severity": "INFO",
         "message": (
             f"Task scheduled quietly: {node_input.get('title')} "
-            f"(score {node_input.get('priority_score')})"
+            f"(score {node_input.get('priority_score')}) -> {result.get('status')}"
         ),
         "decision": "scheduled",
         "title": node_input.get("title"),
         "course": node_input.get("course"),
         "priority_score": node_input.get("priority_score"),
+        "calendar": result,
     }
     print(json.dumps(log_entry), flush=True)
-    return Event(output={"status": "scheduled", **node_input})
+    return Event(output={"status": "scheduled", "calendar": result, **node_input})
 
 
 def emit_reminder_alert(
@@ -239,11 +254,15 @@ reminder_agent = Agent(
     name="reminder_agent",
     model=config.model,
     mode="single_turn",
-    instruction="""You handle a high-priority student task that needs a reminder.
-Call the `emit_reminder_alert` tool with the task's title, course, due_at,
-priority_score, and estimated_hours from the input. Then return a one-line
-confirmation. Do not add commentary.""",
-    tools=[emit_reminder_alert],
+    instruction="""You handle a high-priority student task that needs both a
+calendar block and a reminder.
+
+First call `schedule_block` with the task's title, course, due_at,
+estimated_hours, source_ref, and priority_score from the input, to put a
+work block on the calendar. Then call `emit_reminder_alert` with the
+task's title, course, due_at, priority_score, and estimated_hours. Then
+return a one-line confirmation. Do not add commentary.""",
+    tools=[schedule_block, emit_reminder_alert],
 )
 
 
