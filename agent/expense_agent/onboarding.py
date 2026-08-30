@@ -121,6 +121,20 @@ def run_onboarding() -> dict:
     )
     effort_padding = [1.0, 1.3, 1.2][q7]
 
+    # Q8 - where the agent-triggered scheduler writes blocks. Only applies to
+    # the automatic path (calendar_tool.py, Pub/Sub -> ADK -> Gemini): it
+    # writes one block at a time and never deletes anything it didn't create
+    # itself, so writing to your primary calendar is safe there. The local
+    # dashboard scheduler (taskmaster_calendar.py) always uses its own
+    # dedicated calendar regardless of this setting, because it wipes and
+    # rebuilds its calendar's future events on every run — doing that against
+    # your primary calendar would delete your real events.
+    q8 = _ask_choice(
+        "8) Where should the agent put automatically-scheduled work blocks?",
+        ["A new dedicated calendar (safest)", "My primary calendar"],
+    )
+    calendar_target = ["taskmaster", "primary"][q8]
+
     config = {
         "priority_mode": priority_mode,
         "lead_time_days": lead_time_days,
@@ -133,6 +147,7 @@ def run_onboarding() -> dict:
         "non_canvas_courses": non_canvas,
         "daily_cap_hours": daily_cap_hours,
         "effort_padding": effort_padding,
+        "calendar_target": calendar_target,
     }
 
     CONFIG_PATH.write_text(json.dumps(config, indent=2))
@@ -154,6 +169,8 @@ def run_onboarding() -> dict:
         print(f"  Ignoring:          {', '.join(excluded_courses)}")
     if non_canvas:
         print(f"  Manual check:      {non_canvas}")
+    target_label = "your primary calendar" if calendar_target == "primary" else "a new dedicated calendar"
+    print(f"  Auto-scheduled blocks go to: {target_label}")
     print(f"\n  Saved to {CONFIG_PATH.name}")
     print("  Run the scheduler next: uv run python -m expense_agent.taskmaster_calendar\n")
 
@@ -179,6 +196,7 @@ def load_config() -> dict:
         "non_canvas_courses": "",
         "daily_cap_hours": 4,
         "effort_padding": 1.2,
+        "calendar_target": "taskmaster",
     }
 
 

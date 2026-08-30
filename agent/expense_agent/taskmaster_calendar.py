@@ -21,6 +21,7 @@ Run:
 from __future__ import annotations
 
 import datetime as dt
+import json
 import os
 import re
 from collections import defaultdict
@@ -129,7 +130,13 @@ def _consent_prompt() -> bool:
 
 def _get_service():
     creds = None
-    if os.path.exists(TOKEN_FILE):
+    # Cloud Run has no browser for InstalledAppFlow's local server, and no
+    # writable place to stash a token file across deploys — so a pre-minted
+    # token is injected as an env var (Secret Manager) instead of a file.
+    token_json = os.environ.get("GCAL_TOKEN_JSON")
+    if token_json:
+        creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
+    elif os.path.exists(TOKEN_FILE):
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -137,8 +144,13 @@ def _get_service():
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
             creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
+        # Only persist to disk for the local (file-based) path. Cloud Run's
+        # filesystem is read-only outside /tmp, and a refreshed token there
+        # would vanish on the next cold start anyway — refresh happens
+        # in-memory each time instead.
+        if not token_json:
+            with open(TOKEN_FILE, "w") as f:
+                f.write(creds.to_json())
     return build("calendar", "v3", credentials=creds)
 
 
