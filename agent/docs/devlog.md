@@ -2,6 +2,38 @@
 
 Keep entries short and limited to meaningful or demo-worthy decisions.
 
+## 2026-08-29 — Port the local scheduler's brain losslessly; two more gaps found
+
+- **Before:** After the first Calendar-write pass, `calendar_tool.py`
+  looked real but was a much dumber scheduler than
+  `taskmaster_calendar.py`'s local batch version: one hard-capped 3h
+  block per task, no effort padding, no syllabus difficulty multipliers,
+  no grade-weight, no lead-time pacing, no daily-hour cap. A 10-hour
+  project got a single 3-hour block and the rest silently vanished.
+- **Decision:** Extract the shared per-task placement algorithm
+  (`_plan_blocks_for_task`) so both callers use the identical function,
+  not a simplified copy — the batch scheduler supplies an in-memory
+  per-day capacity dict (unchanged behavior), the Pub/Sub-triggered path
+  supplies one backed by a live calendar query (`_LiveDayCapacity`),
+  since it sees one task at a time with no batch to share state through.
+  Stamped each block with `source_ref` + `block_index` so a task needing
+  several blocks reconciles (patch/insert/delete) instead of duplicating.
+- **After:** Verified against a hand-computed scenario and four new
+  deterministic tests (multi-block splitting, daily-cap enforcement,
+  shrink-reconciliation, real-calendar conflict avoidance — all bypass
+  Gemini, fixed `estimated_hours` in). While specifically checking for
+  remaining gaps, found two more real ones, both fixed same day:
+  `excluded_courses` was never checked outside the local batch path (the
+  deployed agent would have scheduled a course the student said to
+  ignore), and `reminder_agent` was asked to make two sequential tool
+  calls in one LLM turn and intermittently only made one — split into a
+  deterministic `schedule_and_flag` node plus an alert-only LLM node.
+- **Evidence:** 8/8 tests passing, stable across repeated runs
+  (`tests/test_integration.py`).
+- **Limitation:** Still unverified against a real deployed Cloud Run
+  service — everything above is confirmed locally against real Gemini
+  calls and a faked Calendar, not yet against live GCP.
+
 ## 2026-08-29 — Wire the ADK graph to a real Calendar write
 
 - **Before:** The repo had two disconnected halves: an ADK/Gemini graph
