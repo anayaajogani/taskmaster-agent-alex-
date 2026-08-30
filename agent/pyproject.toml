@@ -12,6 +12,9 @@ dependencies = [
     "google-adk>=2.0.0a0",
     "python-dotenv>=1.0.0",
     "uvicorn>=0.34.0",
+    "requests>=2.32.0",
+    "google-api-python-client>=2.150.0",
+    "google-auth-oauthlib>=1.2.0",
 ]
 
 [dependency-groups]
