@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-29T14:46:37.857370-07:00",
+  "generated_at": "2026-08-29T15:28:21.180696-07:00",
   "config": {
     "priority_mode": "grade",
     "daily_cap_hours": 4,
@@ -11,7 +11,7 @@
       "title": "Midterm 1",
       "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
       "due": "Thu Sep 24 07:00 PM",
-      "rank": 0.0554,
+      "rank": 0.0555,
       "budgeted_hours": 2.9,
       "blocks": 2,
       "fully_scheduled": true,

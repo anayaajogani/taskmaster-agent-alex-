@@ -109,14 +109,47 @@ def rebuild_calendar(verbose: bool = True) -> None:
 
 
 def _serve(port: int) -> None:
-    """Serve the interface from the agent folder, quietly."""
-    class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    """Serve the interface plus the /ask endpoint for the voice agent."""
+    import json as _json
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *args):
             pass  # don't spam the console with every poll
 
-    handler = functools.partial(QuietHandler, directory=str(_AGENT_ROOT))
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", port), handler) as httpd:
+        def do_POST(self):
+            if self.path.rstrip("/") != "/ask":
+                self.send_error(404)
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = _json.loads(self.rfile.read(length) or b"{}")
+                question = (body.get("question") or "").strip()
+                if not question:
+                    result = {"answer": "I didn't catch that.", "used_context": False}
+                else:
+                    from .voice import ask
+                    result = ask(question)
+                    print(f"  [{_stamp()}] asked: {question[:60]}")
+            except Exception as e:
+                result = {"answer": "Something went wrong on my end.",
+                          "error": str(e)[:120]}
+            payload = _json.dumps(result).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+    handler = functools.partial(Handler, directory=str(_AGENT_ROOT))
+
+    class Server(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+        def handle_error(self, request, client_address):
+            pass  # browser closed early; not worth a traceback
+
+    with Server(("", port), handler) as httpd:
         httpd.serve_forever()
 
 

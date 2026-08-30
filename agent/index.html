@@ -222,6 +222,66 @@
     margin-top: 14px;
   }
 
+  /* ---------- voice ---------- */
+  .voice-dock {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to top, var(--ink) 62%, transparent);
+    padding: 26px 24px 22px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 50;
+  }
+  .voice-inner {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 780px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .mic {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--raised);
+    color: var(--paper);
+    cursor: pointer;
+    flex: none;
+    display: grid;
+    place-items: center;
+    transition: background .2s, border-color .2s, transform .15s;
+  }
+  .mic:hover { border-color: var(--accent); }
+  .mic:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .mic:active { transform: scale(0.94); }
+  .mic.listening {
+    background: var(--high);
+    border-color: var(--high);
+    color: var(--ink);
+    animation: ring 1.4s ease-out infinite;
+  }
+  .mic.thinking { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  @keyframes ring {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--high) 55%, transparent); }
+    100% { box-shadow: 0 0 0 16px transparent; }
+  }
+  .voice-text {
+    flex: 1;
+    min-height: 22px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .voice-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .voice-you { color: var(--muted); font-size: 13px; margin-bottom: 3px; }
+  .voice-unsupported { font-size: 12.5px; color: var(--muted); }
+  body { padding-bottom: 120px; }
+
   /* ---------- materials ---------- */
   .mats { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 44px; }
   .mat-course {
@@ -375,6 +435,158 @@ function Task({ task, today, color }) {
         {task.overdue_start && <span className="tag tag-late">start date passed</span>}
       </div>
       <Runway task={task} today={today} color={color} />
+    </div>
+  );
+}
+
+// Voice: browser handles speech, the agent handles understanding.
+function Voice() {
+  const [state, setState] = useState("idle");   // idle | listening | thinking
+  const [heard, setHeard]   = useState("");
+  const [reply, setReply]   = useState("");
+  const recogRef = React.useRef(null);
+
+  // Browsers load the voice list asynchronously — without this, the first
+  // reply speaks in the default voice because the list is still empty.
+  useEffect(() => {
+    const warm = () => window.speechSynthesis.getVoices();
+    warm();
+    window.speechSynthesis.onvoiceschanged = warm;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const supported = !!SR;
+
+  // Browser speech uses whatever voices are installed locally, so we can't
+  // guarantee an identical voice everywhere. This picks the best available on
+  // each platform in preference order, so nobody gets stuck with the tinny
+  // default. Enhanced/Premium variants are downloaded system voices and sound
+  // dramatically better than the compact ones.
+  const VOICE_PREFERENCES = [
+    // macOS, best first
+    "Ava (Premium)", "Ava (Enhanced)", "Samantha (Enhanced)", "Zoe (Premium)",
+    "Allison (Enhanced)", "Ava", "Samantha", "Allison", "Susan",
+    // Windows
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Microsoft Jenny Online (Natural) - English (United States)",
+    "Microsoft Aria", "Microsoft Zira",
+    // Chrome's own / Android
+    "Google US English", "Google UK English Female",
+  ];
+
+  const pickVoice = () => {
+    const voices = window.speechSynthesis.getVoices() || [];
+    if (!voices.length) return null;
+
+    for (const wanted of VOICE_PREFERENCES) {
+      const hit = voices.find(v => v.name === wanted);
+      if (hit) return hit;
+    }
+    // Nothing from the list — prefer any English voice that isn't a
+    // "compact" (low quality) variant.
+    const english = voices.filter(v => v.lang && v.lang.startsWith("en"));
+    return english.find(v => !/compact/i.test(v.voiceURI || "")) || english[0] || null;
+  };
+
+  const speak = (text) => {
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice();
+      if (v) u.voice = v;
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* speech synthesis unavailable; text still shows */ }
+  };
+
+  const send = (question) => {
+    setState("thinking");
+    fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        setReply(d.answer || "");
+        setState("idle");
+        speak(d.answer || "");
+      })
+      .catch(() => {
+        setReply("I couldn't reach the agent.");
+        setState("idle");
+      });
+  };
+
+  const listen = () => {
+    if (state === "listening") { recogRef.current && recogRef.current.stop(); return; }
+    if (!supported) return;
+    window.speechSynthesis.cancel();
+
+    const r = new SR();
+    recogRef.current = r;
+    r.lang = "en-US";
+    r.interimResults = true;
+    r.continuous = false;
+
+    let finalText = "";
+    r.onstart = () => { setState("listening"); setHeard(""); setReply(""); };
+    r.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t; else interim += t;
+      }
+      setHeard(finalText || interim);
+    };
+    r.onerror = () => { setState("idle"); setReply("I didn't catch that."); };
+    r.onend = () => {
+      const q = finalText.trim();
+      if (q) send(q); else setState("idle");
+    };
+    r.start();
+  };
+
+  const label =
+    state === "listening" ? "Listening — tap to stop"
+    : state === "thinking" ? "Thinking"
+    : "Tap and ask about your work";
+
+  return (
+    <div className="voice-dock">
+      <div className="voice-inner">
+        <button
+          className={"mic " + state}
+          onClick={listen}
+          disabled={!supported || state === "thinking"}
+          aria-label={state === "listening" ? "Stop listening" : "Ask a question"}
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <rect x="9" y="2" width="6" height="11" rx="3" />
+            <path d="M5 11a7 7 0 0 0 14 0" />
+            <path d="M12 18v4" />
+          </svg>
+        </button>
+        <div className="voice-text">
+          {!supported ? (
+            <span className="voice-unsupported">
+              Voice needs Chrome or Edge. Everything else works here.
+            </span>
+          ) : reply ? (
+            <>
+              {heard && <div className="voice-you">"{heard}"</div>}
+              <div>{reply}</div>
+            </>
+          ) : heard ? (
+            <div>{heard}</div>
+          ) : (
+            <span className="voice-hint">{label}</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -581,6 +793,8 @@ function App() {
         </section>
         );
       })()}
+
+      <Voice />
 
       <p className="foot">
         <span className="pulse" /> Live · agent last ran{" "}
