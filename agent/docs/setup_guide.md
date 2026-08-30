@@ -23,6 +23,13 @@ Gmail access is never requested. Calendar access is scoped to
 and owns itself ("Taskmaster") — it never reads or writes your other
 calendars.
 
+Safe to run in a GCP project that already hosts a teammate's own
+deployment: every resource name here (`taskmaster-agent`,
+`assignment-events`, `gcal-token`, `taskmaster-agent-backend`) is
+distinct from a co-submitter's naming, and this OAuth client is a
+separate **Desktop app** client, not the same one a web-callback-based
+deployment would use.
+
 ## 1. Create the Canvas token
 
 1. Sign in to [bCourses](https://bcourses.berkeley.edu).
@@ -138,9 +145,16 @@ name. Then:
 make remote-test
 ```
 
-publishes one sample assignment to the deployed agent — check Cloud
-Logging (command printed by `make remote-test`) for the routing decision,
-and the "Taskmaster" Google Calendar for the new work block.
+publishes one sample assignment to the deployed agent. This payload is
+deliberately high-priority (due soon, worth 40% of the grade), so it
+exercises the full path — check three places:
+
+- **Cloud Logging** (command printed by `make remote-test`) for the
+  routing decision and `alert_type="task_reminder"`.
+- The **"Taskmaster" Google Calendar** (or your primary calendar, if
+  `taskmaster_config.json` sets `calendar_target: "primary"`) for the new
+  work block.
+- **Email** at `NOTIFICATION_EMAIL` for the reminder alert.
 
 ## 8. Verify readiness
 
