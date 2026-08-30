@@ -314,38 +314,70 @@ FIXED_CFG = {
 }
 
 
-def test_schedule_block_splits_across_days_respecting_daily_cap(fake_calendar, monkeypatch):
-    """A task too big for one block gets split into <=3h chunks, no day
-    holding more than daily_cap_hours worth of this agent's blocks — the
-    exact behavior taskmaster_calendar.py's local batch scheduler has
-    always had, now shared by the Cloud Run path via
-    _plan_blocks_for_task rather than reimplemented."""
-    monkeypatch.setattr(calendar_tool, "load_config", lambda: FIXED_CFG)
-    due = (dt.datetime.now().astimezone() + dt.timedelta(days=10)).isoformat()
-
-    result = calendar_tool.schedule_block(
-        title="Big Project", course="DATA 101", due_at=due,
-        estimated_hours=10, source_ref="big-1", priority_score=5.0,
-    )
-
-    assert result["status"] == "scheduled"
-    assert result["fully_scheduled"] is True
-    events = _events_for(fake_calendar, "big-1")
-    assert len(events) == result["blocks"] > 1
-
+def _assert_blocks_respect_bounds(events, *, daily_cap_hours):
     per_day: dict = {}
     for e in events:
         start = dt.datetime.fromisoformat(e["start"]["dateTime"])
         end = dt.datetime.fromisoformat(e["end"]["dateTime"])
         hours = (end - start).total_seconds() / 3600
-        assert hours <= 3.0 + 1e-9, "no single block should exceed MAX_BLOCK_HOURS"
+        assert 0.5 - 1e-9 <= hours <= 3.0 + 1e-9, f"block duration {hours}h outside [0.5, 3]"
         per_day[start.date()] = per_day.get(start.date(), 0.0) + hours
+    assert all(total <= daily_cap_hours + 1e-9 for total in per_day.values()), "a day exceeded daily_cap_hours"
+    return per_day
 
-    assert all(total <= 4.0 + 1e-9 for total in per_day.values()), "no day should exceed daily_cap_hours"
+
+def test_schedule_block_splits_across_days_respecting_daily_cap(fake_calendar, monkeypatch):
+    """A task too big for one block, but within the 3-block ceiling, gets
+    fully scheduled: split into [0.5, 3]h chunks, no day holding more than
+    daily_cap_hours worth of this agent's blocks — the exact behavior
+    taskmaster_calendar.py's local batch scheduler has always had, now
+    shared by the Cloud Run path via _plan_blocks_for_task rather than
+    reimplemented."""
+    monkeypatch.setattr(calendar_tool, "load_config", lambda: FIXED_CFG)
+    due = (dt.datetime.now().astimezone() + dt.timedelta(days=10)).isoformat()
+
+    result = calendar_tool.schedule_block(
+        title="Medium Task", course="DATA 101", due_at=due,
+        estimated_hours=6, source_ref="medium-1", priority_score=5.0,
+    )
+
+    assert result["status"] == "scheduled"
+    assert result["fully_scheduled"] is True
+    events = _events_for(fake_calendar, "medium-1")
+    assert len(events) == result["blocks"] > 1
+
+    _assert_blocks_respect_bounds(events, daily_cap_hours=4.0)
     total_hours = sum((dt.datetime.fromisoformat(e["end"]["dateTime"]) -
                         dt.datetime.fromisoformat(e["start"]["dateTime"])).total_seconds() / 3600
                        for e in events)
     assert total_hours == pytest.approx(result["budgeted_hours"], abs=0.05)
+
+
+def test_schedule_block_caps_at_three_blocks(fake_calendar, monkeypatch):
+    """A task big enough to need more than 3 blocks doesn't get an
+    unbounded string of sessions — it's capped at 3, each within
+    [0.5, 3]h, and the rest of the budget is reported as unscheduled
+    rather than silently spread across ever more calendar entries."""
+    monkeypatch.setattr(calendar_tool, "load_config", lambda: FIXED_CFG)
+    due = (dt.datetime.now().astimezone() + dt.timedelta(days=10)).isoformat()
+
+    result = calendar_tool.schedule_block(
+        title="Huge Project", course="DATA 101", due_at=due,
+        estimated_hours=10, source_ref="huge-1", priority_score=5.0,
+    )
+
+    assert result["status"] == "scheduled"
+    assert result["blocks"] == 3
+    assert result["fully_scheduled"] is False
+    events = _events_for(fake_calendar, "huge-1")
+    assert len(events) == 3
+
+    _assert_blocks_respect_bounds(events, daily_cap_hours=4.0)
+    total_hours = sum((dt.datetime.fromisoformat(e["end"]["dateTime"]) -
+                        dt.datetime.fromisoformat(e["start"]["dateTime"])).total_seconds() / 3600
+                       for e in events)
+    assert total_hours <= 9.0 + 1e-9, "3 blocks of <=3h each should never exceed 9h total"
+    assert total_hours < result["budgeted_hours"], "budget exceeded the 3-block ceiling, so some should be left over"
 
 
 def test_schedule_block_reconciles_when_estimate_shrinks(fake_calendar, monkeypatch):

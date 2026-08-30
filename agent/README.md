@@ -107,8 +107,11 @@ Cloud Run) and `taskmaster_agent/taskmaster_calendar.py` (called from the local
 `run.py` loop) share the *exact same* placement algorithm —
 `taskmaster_calendar._plan_blocks_for_task` — not a simplified copy of it.
 Effort padding, syllabus difficulty multipliers, grade weight, lead-time
-pacing, multi-block splitting (a big task becomes several ≤3h blocks), and
-the daily-hour cap all apply on both paths identically.
+pacing, multi-block splitting, and the daily-hour cap all apply on both
+paths identically. Each block is [0.5, 3] hours; a task gets at most 3
+blocks (so at most 9 hours of any one assignment is ever scheduled) —
+whatever doesn't fit is reported as unscheduled rather than spread across
+an unbounded string of sessions.
 
 The two callers differ only in how they know what capacity is already
 spoken for on a given day:

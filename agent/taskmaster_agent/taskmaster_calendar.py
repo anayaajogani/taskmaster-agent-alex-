@@ -55,7 +55,9 @@ CREDENTIALS_FILE = os.environ.get("GCAL_CREDENTIALS", str(_AGENT_ROOT / "gcal_cr
 TOKEN_FILE = os.environ.get("GCAL_TOKEN", str(_AGENT_ROOT / "gcal_token.json"))
 
 CALENDAR_NAME = "Taskmaster"
+MIN_BLOCK_HOURS = 0.5
 MAX_BLOCK_HOURS = 3.0
+MAX_BLOCKS_PER_TASK = 3
 PRIORITY_COURSE_BOOST = 1.5
 
 # Google Calendar colorIds (what the numbers actually look like):
@@ -279,12 +281,19 @@ def _advance_to_workable(cursor: dt.datetime, cfg) -> dt.datetime:
 
 
 def _plan_blocks_for_task(task, cfg, cap: float, per_day, conflict_free=None):
-    """Split one task's budgeted hours into <=MAX_BLOCK_HOURS chunks across
-    work days, respecting lead_time_days pacing and a shared per-day
-    capacity cap. This is the scheduling "brain" — the one place effort
-    padding, syllabus difficulty, grade weight (via ``_budget_hours``),
-    lead-time pacing, and daily capacity all combine — and it's shared by
-    both callers so there's exactly one algorithm, not two.
+    """Split one task's budgeted hours into up to MAX_BLOCKS_PER_TASK chunks
+    of [MIN_BLOCK_HOURS, MAX_BLOCK_HOURS] each, across work days, respecting
+    lead_time_days pacing and a shared per-day capacity cap. This is the
+    scheduling "brain" — the one place effort padding, syllabus difficulty,
+    grade weight (via ``_budget_hours``), lead-time pacing, and daily
+    capacity all combine — and it's shared by both callers so there's
+    exactly one algorithm, not two.
+
+    A task whose budgeted hours exceed MAX_BLOCKS_PER_TASK * MAX_BLOCK_HOURS
+    (currently 3 * 3 = 9h) simply won't get the rest scheduled — better a
+    bounded, predictable number of sessions than an unbounded string of
+    them for one assignment; ``remaining`` in the return value reports
+    whatever didn't fit.
 
     ``per_day`` is a mutable mapping (date -> hours already committed that
     day) this function reads AND updates as it places blocks. Pass a fresh
@@ -320,7 +329,7 @@ def _plan_blocks_for_task(task, cfg, cap: float, per_day, conflict_free=None):
 
     blocks: list[tuple[dt.datetime, dt.datetime]] = []
     guard = 0
-    while remaining > 0 and guard < 500:
+    while remaining > 0 and len(blocks) < MAX_BLOCKS_PER_TASK and guard < 500:
         guard += 1
         cursor = _advance_to_workable(cursor, cfg)
         if cursor >= due_local:
@@ -333,10 +342,10 @@ def _plan_blocks_for_task(task, cfg, cap: float, per_day, conflict_free=None):
             )
             continue
         chunk = min(remaining, MAX_BLOCK_HOURS, room_today, end_h - cursor.hour)
-        if chunk <= 0:
-            cursor = _advance_to_workable(
-                (cursor + dt.timedelta(days=1)).replace(hour=start_h, minute=0), cfg
-            )
+        if chunk < MIN_BLOCK_HOURS:
+            # Not enough room here for even the smallest allowed block —
+            # try the next hour rather than wedging in a sliver.
+            cursor = _advance_to_workable(cursor + dt.timedelta(hours=1), cfg)
             continue
         end = cursor + dt.timedelta(hours=chunk)
         if conflict_free is not None and not conflict_free(cursor, end):
