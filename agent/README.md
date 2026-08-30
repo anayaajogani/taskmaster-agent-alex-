@@ -1,235 +1,194 @@
-# Ambient Expense Agent
+# Taskmaster — an ambient agent for the "five-tab tax"
 
-A production-ready **ambient agent** that processes expense reports arriving via
-Pub/Sub and routes them through an **ADK 2.0 graph-based workflow**. Low-value
-expenses are auto-approved instantly; high-value ones go through LLM risk
-analysis and **human-in-the-loop approval** before a decision is made.
+**Google "All Things Agentic" hackathon — Taskmaster track.**
 
-<table>
-  <thead>
-    <tr>
-      <th colspan="2">Key Features</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>🔄</td>
-      <td><strong>ADK 2.0 Graph Workflow:</strong> Conditional routing with function nodes and LLM agents in the same graph — business rules stay in code, LLM handles judgment calls.</td>
-    </tr>
-    <tr>
-      <td>📡</td>
-      <td><strong>Ambient & Event-Driven:</strong> Listens for expense events via <a href="https://cloud.google.com/pubsub">Pub/Sub</a> triggers and processes them automatically in the background.</td>
-    </tr>
-    <tr>
-      <td>✋</td>
-      <td><strong>Human-in-the-Loop:</strong> High-value expenses pause the workflow with <code>RequestInput</code> until a manager approves or rejects via a dedicated approval UI.</td>
-    </tr>
-    <tr>
-      <td>☁️</td>
-      <td><strong>Production-Ready Deployment:</strong> One-command <a href="https://www.terraform.io/">Terraform</a> setup — two <a href="https://cloud.google.com/run">Cloud Run</a> services, Pub/Sub, Cloud Monitoring alerts, IAM, and <a href="https://cloud.google.com/iap">IAP</a>.</td>
-    </tr>
-  </tbody>
-</table>
+## Problem
 
-| Attribute | Description |
-| :--- | :--- |
-| **Interaction Type** | Ambient (event-driven) with HITL approval |
-| **Complexity** | Intermediate |
-| **Agent Type** | ADK 2.0 Graph-based Workflow |
-| **Trigger Sources** | Pub/Sub push |
+A student juggling four classes checks Canvas, a course website, a syllabus
+PDF, and their own calendar just to answer "what do I need to start today?"
+None of those sources agree, most assignments never make it onto a real
+calendar, and a newly posted project competes for the same evening as
+whatever social plan got added last. That's real, observed friction, not
+a hypothetical: across active Fall 2026 courses we found assignments that
+live only in Canvas's structured API, others that exist only as prose in a
+syllabus PDF, and at least one course whose "calendar" is a stale public ICS
+feed with no current-term events at all. A single wrapper around one API
+call doesn't cover this — it needs an agent that notices a change, decides
+what it means, and acts.
 
-## How It Works
+## Solution
 
-The agent is built as an ADK 2.0 [`Workflow`](https://adk.dev/workflows/) with
-conditional routing. The $100 threshold lives in code, not in a prompt — only
-high-value expenses hit the LLM. See
-[`expense_agent/agent.py`](expense_agent/agent.py) for the full graph definition.
+Taskmaster watches for new or changed Canvas assignments, has Gemini
+estimate how much effort each one will take, scores urgency and grade
+weight deterministically, and — without being asked — puts a work block on
+a dedicated Google Calendar before the deadline. High-priority tasks also
+get an escalating reminder. Re-running the sync updates existing blocks
+instead of duplicating them, so the same pipeline that runs once for a demo
+is the one that would run every hour for real.
 
 ```
-  Expense arrives (Pub/Sub)
-            │
-     parse & extract data
-            │
-      route by amount
-       │          │
-   < $100       >= $100
-       │          │
-  auto-approve   LLM reviews risk
-   (done)        & emails alert
-                  │
-            manager approves
-             or rejects
-             (approval UI)
-                  │
-            agent logs decision
-             & takes action
+new/changed assignment → Gemini effort estimate → deterministic priority score
+    → real Google Calendar write (idempotent) → reminder alert if high-priority
 ```
 
-### Deployment Architecture
+## Architecture
 
-The agent deploys as two [Cloud Run](https://cloud.google.com/run) services
-with [Cloud Monitoring](https://cloud.google.com/monitoring) for email alerts:
+```mermaid
+flowchart LR
+    Canvas[bCourses / Canvas API] -->|poll| Poller[canvas_poller.py]
+    Poller -->|publish Task JSON| PubSub[(Pub/Sub: assignment-events)]
+    PubSub -->|push| CloudRun[Cloud Run: ADK graph]
 
-- **Backend** — runs the ADK agent. Pub/Sub pushes expense messages to it
-  directly (authenticated via service account).
-- **Frontend** — the approval UI. Protected by
-  [Identity-Aware Proxy (IAP)](https://cloud.google.com/iap) so only
-  authorized managers can access it. Calls the backend on behalf of the user.
-- **Monitoring** — when the agent flags a high-value expense, it emits a
-  structured log. A log-based metric triggers an email alert to the manager
-  with a link to the approval UI.
+    subgraph CloudRun[Cloud Run — expense_agent.agent]
+        Parse[parse_task_event] --> Effort[effort_agent — Gemini 3 Flash]
+        Effort --> Clamp[apply_effort_estimate]
+        Clamp --> Score[estimate_and_score — deterministic]
+        Score -->|QUIET| Quiet[schedule_quietly]
+        Score -->|HIGH_PRIORITY| Reminder[reminder_agent — Gemini]
+    end
 
-```
-                       ┌─────────────────────────┐
-  Pub/Sub ───────────► │  Backend  (Cloud Run)   │
-                       │  ADK agent + triggers   │
-                       └──────┬─────────▲────────┘
-                              │         │
-                    structured log      │
-                              │         │
-                       ┌──────▼──────┐  │
-                       │  Cloud      │  │
-                       │  Monitoring │  │
-                       └──────┬──────┘  │
-                              │         │
-                        email alert     │
-                              │         │
-                       ┌──────▼──────┐  │
-                       │  Manager    │  │
-                       └──────┬──────┘  │
-                              │         │
-                       ┌──────▼─────────┴────────┐
-  Browser ── login ──► │  Frontend  (Cloud Run)  │
-                       │  Approval UI (IAP)      │
-                       └─────────────────────────┘
+    Quiet --> Calendar[Google Calendar: Taskmaster calendar]
+    Reminder --> Calendar
+    Reminder -->|structured log| Logging[Cloud Logging]
+    Logging -->|log-based metric| Monitoring[Cloud Monitoring alert]
+    Monitoring -->|email| Student((Student))
+
+    Syllabus[syllabus.py — PDF/HTML + Gemini] -.optional, offline.-> Poller
+    LocalLoop[run.py local loop + dashboard] -.dev/demo surface, not deployed.-> Calendar
 ```
 
-## Getting Started
+Two surfaces show the same work: the deployed Cloud Run service is what
+Pub/Sub, Gemini, and Cloud Logging actually touch (the cloud proof); the
+local dashboard (`index.html`, `run.py`) reads the same Calendar and Canvas
+data for a readable demo view. They are not the same process — see
+[Two schedulers, on purpose](#two-schedulers-on-purpose) below.
 
-**Prerequisites:** [Python 3.11+](https://www.python.org/downloads/), [uv](https://github.com/astral-sh/uv)
+## Why the LLM only estimates effort
 
-### 1. Clone the repository
+Gemini never decides what's urgent or what gets scheduled first —
+`scoring.py`'s `score_task()` does that with a fixed formula
+(`urgency × grade_weight × effort`), so the ranking is transparent,
+debuggable, and can't be hallucinated. The one thing a deterministic
+formula can't do from raw text is guess how long "Project 2: implement a
+hash map" will take — that's the only judgment call handed to Gemini
+(`prompts.py:EFFORT_ESTIMATOR_INSTRUCTION`), and its output is clamped to a
+plausible range before it ever reaches the calendar (see below).
 
-```bash
-git clone https://github.com/google/adk-samples.git
-cd adk-samples/python/agents/ambient-expense-agent
+## Reliability: one visible failure/recovery path
+
+- **LLM effort estimate is clamped, not trusted.** Gemini can return `0.01h`
+  or `400h` for an estimate. `agent.py:apply_effort_estimate` clamps to
+  `[0.25, 20]` hours, forces `confidence="low"` when it had to intervene,
+  and logs the clamp so an operator can see it happened
+  (`{"message": "Effort estimate was out of range and was clamped."}`).
+- **Idempotent Calendar writes.** Every event is stamped with
+  `extendedProperties.private.source_ref`. Re-processing the same
+  assignment patches the existing block instead of inserting a duplicate
+  (`calendar_tool.py:schedule_block`) — safe for retries and for an hourly
+  Cloud Scheduler sync.
+- **Pub/Sub retry + dead-letter.** `terraform/pubsub.tf` retries failed
+  deliveries with exponential backoff and routes anything that fails 5
+  times to a dead-letter topic, instead of silently dropping it.
+
+## Two schedulers, on purpose
+
+`expense_agent/calendar_tool.py` (called from the ADK graph, deployed on
+Cloud Run) and `expense_agent/taskmaster_calendar.py` (called from the local
+`run.py` loop) reuse the same auth, calendar lookup, and color logic —
+`calendar_tool.py` is deliberately thin and imports its helpers from
+`taskmaster_calendar.py` rather than reimplementing them. The local loop
+additionally does capacity-aware multi-block placement across a whole task
+list (daily hour caps, off-days) for a richer dashboard view; the Cloud Run
+path places one block per task as it arrives via Pub/Sub.
+
+**Where blocks land is a config choice, not two competing files.**
+`taskmaster_config.json`'s `calendar_target` (set via `onboarding.py`) is
+either `"taskmaster"` (a new dedicated calendar — default) or `"primary"`
+(the student's real calendar). Only `calendar_tool.py` honors it:
+
+- It only ever inserts or patches the one event it owns
+  (`source_ref`-keyed), never anything else, so writing to `primary` is
+  safe there.
+- `taskmaster_calendar.py`'s local scheduler **always** uses the dedicated
+  calendar regardless of this setting, because it wipes and rebuilds its
+  calendar's entire future on every run — doing that against `primary`
+  would delete real events.
+
+Either way, the free-slot search checks `primary`'s real busy times (plus
+the target calendar's own, if different), so a newly added personal event
+is a real conflict the agent reacts to — not just its own prior blocks.
+
+## Repository layout
+
+```
+expense_agent/
+  agent.py              ADK graph: parse → Gemini effort estimate → score → route
+  calendar_tool.py       The graph's consequential action: idempotent Calendar write
+  scoring.py             Deterministic priority formula (the ranking judges can audit)
+  prompts.py              The one LLM instruction in the whole pipeline
+  models.py               Task, the normalized unit that flows through everything
+  canvas_poller.py        Canvas → Pub/Sub bridge (real bCourses REST calls)
+  syllabus.py              Syllabus PDF/HTML → Gemini difficulty + assignment extraction
+  taskmaster_calendar.py   Local capacity-aware scheduler + dashboard data
+  daily_view.py, task_list.py, study_plan.py, materials.py   Dashboard/briefing outputs
+  onboarding.py            Terminal survey → taskmaster_config.json (per-student tuning)
+  fast_api_app.py          ADK web server entrypoint (Cloud Run)
+  run.py                   Local dev loop: refresh + serve the dashboard
+terraform/                 Cloud Run, Pub/Sub, IAM, Cloud Monitoring
+tests/test_integration.py  ADK graph tests (real Gemini calls, faked Calendar)
+docs/setup_guide.md         Credential + GCP setup, step by step
+docs/devlog.md               Before/decision/after log of the build
+index.html                   Static dashboard, reads daily_view.json/task_list.json
 ```
 
-### 2. Configure authentication
+## Setup
 
-Create a `.env` file (see [`.env.example`](.env.example)).
+**Local:**
 
-**Option A: [Google AI Studio](https://aistudio.google.com/app/apikey)**
-
-```bash
-echo "GOOGLE_API_KEY=YOUR_AI_STUDIO_API_KEY" >> .env
+```sh
+make install
+cp .env.example .env   # add GOOGLE_API_KEY, or configure Vertex AI (see .env.example)
+make dev               # runs the ADK graph + Pub/Sub trigger endpoint locally
 ```
 
-**Option B: [Google Cloud Vertex AI](https://cloud.google.com/vertex-ai)**
+Feed it real assignments from your own Canvas account (needs `CANVAS_TOKEN`,
+see `docs/setup_guide.md` §1):
 
-```bash
-echo "GOOGLE_GENAI_USE_VERTEXAI=TRUE" >> .env
-echo "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID" >> .env
-echo "GOOGLE_CLOUD_LOCATION=global" >> .env
-gcloud auth application-default login
+```sh
+uv run python -m expense_agent.feed_canvas
 ```
 
-### 3. Install and run
+**Cloud deployment** — full credential and GCP setup in
+[`docs/setup_guide.md`](docs/setup_guide.md); once the Calendar token secret
+exists:
 
-Start the backend:
-
-```bash
-make install && make dev
-```
-
-In a separate terminal, start the approval UI:
-
-```bash
-make install-frontend && make dev-frontend
-```
-
-### 4. Try it out
-
-Open the ADK playground to interact with the agent directly:
-
-```bash
-make playground
-```
-
-This starts the ADK web UI at `http://localhost:8501`.
-
-To test the full Pub/Sub trigger flow, send an expense in another terminal:
-
-```bash
-curl -s http://localhost:8080/apps/expense_agent/trigger/pubsub \
-  -H "Content-Type: application/json" \
-  -d "{\"message\":{\"data\":\"$(echo '{"amount":250,"submitter":"alice@company.com","category":"travel","description":"Flight to NYC","date":"2026-04-10"}' | base64)\",\"attributes\":{\"source\":\"test\"}},\"subscription\":\"test-sub\"}"
-```
-
-This $250 expense triggers review + HITL approval. Open the approval UI
-at `http://localhost:8081/approval` to approve or reject it.
-
-> **Tip:** Expenses under $100 are auto-approved — change `amount` to
-> `45` to test that path.
-
-## Cloud Deployment
-
-Deploy both services and all supporting infrastructure with a single command.
-
-**Prerequisites:** [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), [Terraform](https://www.terraform.io/)
-
-```bash
+```sh
 gcloud config set project YOUR_PROJECT_ID
-make deploy NOTIFICATION_EMAIL=finance@example.com
+make deploy NOTIFICATION_EMAIL=you@example.com
+make remote-test   # publishes one sample assignment to the deployed agent
 ```
 
-This builds container images (in parallel) and deploys everything via
-Terraform: two Cloud Run services, Pub/Sub (with dead-letter), Cloud
-Monitoring alerts, IAM, and IAP.
+**Tests:**
 
-> **Note:** IAP can take **5–10 minutes** to fully propagate after the
-> initial deployment. If you see a `403 Forbidden` when opening the
-> approval UI, wait a few minutes and refresh.
-
-### Test the deployed agent
-
-```bash
-make remote-test
+```sh
+make test
 ```
 
-This publishes a $250 travel expense. The agent will route it to the review
-agent, analyze risk factors, email an alert to `NOTIFICATION_EMAIL`, and pause
-for human approval. Open the approval UI (URL printed by `make deploy`) to
-approve or reject.
+## What's real vs. what's a demo convenience
 
-### Cleanup
+- **Real:** Canvas assignment data (`canvas_poller.py` hits the live bCourses
+  REST API), Google Calendar writes (a real, dedicated "Taskmaster"
+  calendar in the student's own account), Gemini effort estimation, and the
+  deployed Cloud Run + Pub/Sub + Cloud Monitoring pipeline.
+- **Demo convenience:** the local dashboard (`index.html`) is a static page
+  reading JSON files written by `run.py`'s local loop — it is not itself
+  deployed to Cloud Run. Cloud Run's own service account is what runs the
+  autonomous Pub/Sub-triggered path; the local loop is a separate,
+  authenticated-as-you convenience for a demo view of the same calendar.
 
-```bash
-make clean NOTIFICATION_EMAIL=finance@example.com
-```
+## Tech stack
 
-## Customization
-
-| What to change | How |
-| --- | --- |
-| **Approval threshold** | Change `review_threshold` in `expense_agent/config.py` |
-| **LLM model** | Change `model` in `expense_agent/config.py` |
-| **Expense schema** | Edit the `ExpenseData` Pydantic model in `expense_agent/agent.py` |
-| **Review logic** | Edit the `review_agent` instruction in `expense_agent/agent.py` |
-| **Approval UI** | Edit `frontend/static/approval.html` |
-| **Downstream actions** | Add workflow nodes for Slack, databases, or notifications |
-| **Multi-level routing** | Add routes (e.g., `ESCALATE` for expenses > $1000) |
-| **Notification channel** | Replace email with Slack, PagerDuty, or SMS in `terraform/monitoring.tf` ([docs](https://cloud.google.com/monitoring/support/notification-options)) |
-| **Email content** | The alert email uses a static template. To include dynamic expense data (amount, submitter) in the email, switch from log-based metrics to [custom metrics with template variables](https://cloud.google.com/monitoring/alerts/doc-variables) |
-
-## Troubleshooting
-
-- For general ADK issues, see the [ADK documentation](https://adk.dev).
-- For trigger endpoint details, see [Ambient Agents](https://adk.dev/runtime/ambient-agents/).
-- For Cloud Run deployment, see [Deploy to Cloud Run](https://adk.dev/deploy/cloud-run/).
-
-## Disclaimer
-
-This agent sample is provided for illustrative purposes only. It serves as a basic example of an agent and a foundational starting point for individuals or teams to develop their own agents.
-
-Users are solely responsible for any further development, testing, security hardening, and deployment of agents based on this sample. We recommend thorough review, testing, and the implementation of appropriate safeguards before using any derived agent in a live or critical system.
+Gemini 3 Flash (via the Google ADK's `Agent`), Google ADK 2.0's
+graph-based `Workflow`, Cloud Run, Pub/Sub (with dead-letter + retry),
+Cloud Monitoring (log-based metric + email alert), Secret Manager (Calendar
+OAuth token), and the Google Calendar API.
