@@ -5,7 +5,7 @@ The scheduler reads that config instead of using hardcoded defaults, so every
 answer changes real behavior.
 
 Run:
-    uv run python -m expense_agent.onboarding
+    uv run python -m taskmaster_agent.onboarding
 """
 
 from __future__ import annotations
@@ -172,7 +172,7 @@ def run_onboarding() -> dict:
     target_label = "your primary calendar" if calendar_target == "primary" else "a new dedicated calendar"
     print(f"  Auto-scheduled blocks go to: {target_label}")
     print(f"\n  Saved to {CONFIG_PATH.name}")
-    print("  Run the scheduler next: uv run python -m expense_agent.taskmaster_calendar\n")
+    print("  Run the scheduler next: uv run python -m taskmaster_agent.taskmaster_calendar\n")
 
     return config
 

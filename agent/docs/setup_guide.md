@@ -103,7 +103,7 @@ gcloud services enable \
 ## 5. Mint the Calendar token once, locally
 
 ```sh
-uv run python -m expense_agent.taskmaster_calendar
+uv run python -m taskmaster_agent.taskmaster_calendar
 ```
 
 This opens a browser for one-time consent, then writes `gcal_token.json`

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Ambient expense agent for processing expense reports via triggers."""
+"""Ambient taskmaster agent for processing student assignments via triggers."""
 
 from .config import config  # noqa: F401 — auth setup runs on import
 from .agent import root_agent  # noqa: F401

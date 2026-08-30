@@ -16,7 +16,7 @@ Tiers come from the priority score the scheduler already computes, so they
 reflect the student's stated priority_mode rather than a second opinion.
 
 Run:
-    uv run python -m expense_agent.daily_view
+    uv run python -m taskmaster_agent.daily_view
 """
 
 from __future__ import annotations

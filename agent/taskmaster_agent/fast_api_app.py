@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""FastAPI entry point for the ambient expense agent backend.
+"""FastAPI entry point for the ambient taskmaster agent backend.
 
 This file configures the ADK web server with Pub/Sub trigger endpoints
-enabled, allowing the agent to process expense reports autonomously
+enabled, allowing the agent to process student assignments autonomously
 when deployed to Cloud Run.
-
-The frontend service queries the ADK's built-in session APIs
-(``GET /apps/{app}/users/{user}/sessions``) to find pending approvals.
 
 Includes middleware to normalize Pub/Sub subscription names from their
 fully-qualified resource paths (``projects/.../subscriptions/NAME``)
@@ -34,7 +31,7 @@ from google.adk.cli.fast_api import get_fast_api_app
 from starlette.requests import Request
 
 # The ADK needs the project root as agents_dir so it discovers
-# expense_agent/ as an agent package (contains agent.py + __init__.py).
+# taskmaster_agent/ as an agent package (contains agent.py + __init__.py).
 AGENTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = get_fast_api_app(

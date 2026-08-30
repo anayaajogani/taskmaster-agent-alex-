@@ -39,16 +39,18 @@ flowchart LR
     Poller -->|publish Task JSON| PubSub[(Pub/Sub: assignment-events)]
     PubSub -->|push| CloudRun[Cloud Run: ADK graph]
 
-    subgraph CloudRun[Cloud Run — expense_agent.agent]
-        Parse[parse_task_event] --> Effort[effort_agent — Gemini 3 Flash]
+    subgraph CloudRun[Cloud Run — taskmaster_agent.agent]
+        Parse[parse_task_event] --> Effort[effort_agent — Gemini 3.7 Flash]
         Effort --> Clamp[apply_effort_estimate]
         Clamp --> Score[estimate_and_score — deterministic]
+        Score -->|EXCLUDED| Skip[skip_excluded — no-op]
         Score -->|QUIET| Quiet[schedule_quietly]
-        Score -->|HIGH_PRIORITY| Reminder[reminder_agent — Gemini]
+        Score -->|HIGH_PRIORITY| Flag[schedule_and_flag — deterministic]
+        Flag --> Reminder[reminder_agent — Gemini, alert only]
     end
 
     Quiet --> Calendar[Google Calendar: Taskmaster calendar]
-    Reminder --> Calendar
+    Flag --> Calendar
     Reminder -->|structured log| Logging[Cloud Logging]
     Logging -->|log-based metric| Monitoring[Cloud Monitoring alert]
     Monitoring -->|email| Student((Student))
@@ -61,7 +63,15 @@ Two surfaces show the same work: the deployed Cloud Run service is what
 Pub/Sub, Gemini, and Cloud Logging actually touch (the cloud proof); the
 local dashboard (`index.html`, `run.py`) reads the same Calendar and Canvas
 data for a readable demo view. They are not the same process — see
-[Two schedulers, on purpose](#two-schedulers-on-purpose) below.
+[One scheduling brain, two triggers](#one-scheduling-brain-two-triggers)
+below.
+
+Scheduling is deterministic code in both the QUIET and HIGH_PRIORITY
+routes (`schedule_quietly`, `schedule_and_flag`) — `reminder_agent`'s only
+job is composing the alert. An earlier version asked one LLM call to both
+schedule the block *and* emit the alert; in practice it sometimes only did
+one of the two. Splitting them out fixed that and matches this file's own
+principle: consequential actions belong in code, not LLM memory.
 
 ## Why the LLM only estimates effort
 
@@ -92,8 +102,8 @@ plausible range before it ever reaches the calendar (see below).
 
 ## One scheduling brain, two triggers
 
-`expense_agent/calendar_tool.py` (called from the ADK graph, deployed on
-Cloud Run) and `expense_agent/taskmaster_calendar.py` (called from the local
+`taskmaster_agent/calendar_tool.py` (called from the ADK graph, deployed on
+Cloud Run) and `taskmaster_agent/taskmaster_calendar.py` (called from the local
 `run.py` loop) share the *exact same* placement algorithm —
 `taskmaster_calendar._plan_blocks_for_task` — not a simplified copy of it.
 Effort padding, syllabus difficulty multipliers, grade weight, lead-time
@@ -141,7 +151,7 @@ is a real conflict the agent reacts to — not just its own prior blocks.
 ## Repository layout
 
 ```
-expense_agent/
+taskmaster_agent/
   agent.py              ADK graph: parse → Gemini effort estimate → score → route
   calendar_tool.py       The graph's consequential action: idempotent Calendar write
   scoring.py             Deterministic priority formula (the ranking judges can audit)
@@ -175,7 +185,7 @@ Feed it real assignments from your own Canvas account (needs `CANVAS_TOKEN`,
 see `docs/setup_guide.md` §1):
 
 ```sh
-uv run python -m expense_agent.feed_canvas
+uv run python -m taskmaster_agent.feed_canvas
 ```
 
 **Cloud deployment** — full credential and GCP setup in
@@ -208,7 +218,7 @@ make test
 
 ## Tech stack
 
-Gemini 3 Flash (via the Google ADK's `Agent`), Google ADK 2.0's
+Gemini 3.7 Flash (via the Google ADK's `Agent`), Google ADK 2.0's
 graph-based `Workflow`, Cloud Run, Pub/Sub (with dead-letter + retry),
 Cloud Monitoring (log-based metric + email alert), Secret Manager (Calendar
 OAuth token), and the Google Calendar API.

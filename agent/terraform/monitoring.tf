@@ -16,7 +16,7 @@
 # Cloud Monitoring: log-based metric + alert policy + notification channel
 #
 # When the graph routes a task HIGH_PRIORITY, reminder_agent emits a
-# structured JSON log with alert_type="task_reminder" (expense_agent/
+# structured JSON log with alert_type="task_reminder" (taskmaster_agent/
 # agent.py:emit_reminder_alert). Cloud Logging ingests it, a log-based
 # metric counts it, and an alert policy emails the student. This is the
 # second consequential action in the demo, alongside the calendar write.

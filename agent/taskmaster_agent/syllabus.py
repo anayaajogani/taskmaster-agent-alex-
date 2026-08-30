@@ -16,7 +16,7 @@ Difficulty feeds the scheduler's time budgeting. Extracted assignments get
 surfaced so you can decide whether to track them.
 
 Run:
-    uv run python -m expense_agent.syllabus
+    uv run python -m taskmaster_agent.syllabus
 """
 
 from __future__ import annotations

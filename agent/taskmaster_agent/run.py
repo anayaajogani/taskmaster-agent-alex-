@@ -3,7 +3,7 @@
 Keeps the agent's outputs fresh without you typing anything. Refreshes on a
 loop and also serves the interface, so one command gets you a working system.
 
-    uv run python -m expense_agent.run
+    uv run python -m taskmaster_agent.run
 
 What it does on each cycle:
   1. pulls Canvas assignments + module materials

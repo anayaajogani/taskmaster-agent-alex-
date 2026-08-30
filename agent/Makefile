@@ -15,7 +15,7 @@ install:
 	uv sync
 
 dev:
-	uv run python expense_agent/fast_api_app.py
+	uv run python taskmaster_agent/fast_api_app.py
 
 playground:
 	uv run adk web --port 8501

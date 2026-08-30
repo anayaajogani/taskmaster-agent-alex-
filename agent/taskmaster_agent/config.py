@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Centralized configuration for the ambient expense agent."""
+"""Centralized configuration for the ambient taskmaster agent."""
 
 import os
 from dataclasses import dataclass

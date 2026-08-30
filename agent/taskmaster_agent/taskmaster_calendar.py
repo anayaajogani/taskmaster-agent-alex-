@@ -15,7 +15,7 @@ Every onboarding answer changes real behavior here:
   effort_padding     -> how much to inflate effort estimates
 
 Run:
-    uv run python -m expense_agent.taskmaster_calendar
+    uv run python -m taskmaster_agent.taskmaster_calendar
 """
 
 from __future__ import annotations

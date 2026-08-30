@@ -16,7 +16,7 @@
 
 Spins up the backend (ADK graph + Pub/Sub trigger) using an ASGI test
 transport. The graph still calls the real Gemini effort-estimator agent
-(no LLM mocking — same assumption the original ambient-expense-agent test
+(no LLM mocking — same assumption the original taskmaster-agent test
 suite made), so these need real credentials configured (GOOGLE_API_KEY or
 Vertex AI application-default credentials), same as `make dev`.
 
@@ -47,9 +47,9 @@ import httpx
 import pytest
 import pytest_asyncio
 
-from expense_agent import agent as agent_module
-from expense_agent import calendar_tool
-from expense_agent.fast_api_app import app as backend_app
+from taskmaster_agent import agent as agent_module
+from taskmaster_agent import calendar_tool
+from taskmaster_agent.fast_api_app import app as backend_app
 
 
 class _FakeExecutable:
@@ -225,7 +225,7 @@ async def test_low_priority_schedules_quietly(backend, fake_calendar):
     real (faked) calendar block — every task the agent sees produces a
     visible calendar change, whether or not it also nags."""
     resp = await backend.post(
-        "/apps/expense_agent/trigger/pubsub",
+        "/apps/taskmaster_agent/trigger/pubsub",
         json=_make_pubsub_payload(LOW_PRIORITY_TASK),
     )
     assert resp.status_code == 200
@@ -243,7 +243,7 @@ async def test_excluded_course_is_never_scheduled(backend, fake_calendar, capsys
     monkeypatch.setattr(agent_module, "load_config", lambda: {"excluded_courses": ["DATA C100"]})
 
     resp = await backend.post(
-        "/apps/expense_agent/trigger/pubsub",
+        "/apps/taskmaster_agent/trigger/pubsub",
         json=_make_pubsub_payload(LOW_PRIORITY_TASK),
     )
     assert resp.status_code == 200
@@ -261,7 +261,7 @@ async def test_high_priority_schedules_and_reminds(backend, fake_calendar, capsy
     block(s) AND a reminder alert (the log-based metric behind
     terraform/monitoring.tf's alert policy)."""
     resp = await backend.post(
-        "/apps/expense_agent/trigger/pubsub",
+        "/apps/taskmaster_agent/trigger/pubsub",
         json=_make_pubsub_payload(HIGH_PRIORITY_TASK),
     )
     assert resp.status_code == 200
@@ -283,11 +283,11 @@ async def test_reprocessing_same_task_is_idempotent(backend, fake_calendar):
     logic is specifically designed to handle that (see the deterministic
     shrink test below for an exact-count version of this guarantee)."""
     payload = _make_pubsub_payload(LOW_PRIORITY_TASK, subscription="run-1")
-    resp = await backend.post("/apps/expense_agent/trigger/pubsub", json=payload)
+    resp = await backend.post("/apps/taskmaster_agent/trigger/pubsub", json=payload)
     assert resp.status_code == 200
 
     payload = _make_pubsub_payload(LOW_PRIORITY_TASK, subscription="run-2")
-    resp = await backend.post("/apps/expense_agent/trigger/pubsub", json=payload)
+    resp = await backend.post("/apps/taskmaster_agent/trigger/pubsub", json=payload)
     assert resp.status_code == 200
 
     # Whatever block count the second run settled on, the calendar should

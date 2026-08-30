@@ -12,7 +12,7 @@ Respects the same rules as the rest of the agent:
   - items you've already completed are skipped
 
 Run:
-    uv run python -m expense_agent.materials
+    uv run python -m taskmaster_agent.materials
 """
 
 from __future__ import annotations

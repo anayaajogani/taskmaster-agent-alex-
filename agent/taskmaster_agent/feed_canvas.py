@@ -13,7 +13,7 @@ from .canvas_poller import assignments_to_tasks
 
 AGENT_URL = os.environ.get(
     "AGENT_URL",
-    "http://localhost:8080/apps/expense_agent/trigger/pubsub",
+    "http://localhost:8080/apps/taskmaster_agent/trigger/pubsub",
 )
 
 

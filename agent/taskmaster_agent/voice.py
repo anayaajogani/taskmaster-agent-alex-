@@ -12,7 +12,7 @@ Endpoints (served by run.py):
          ->     {"answer": "...", "used_context": true}
 
 Run standalone to test without speech:
-    uv run python -m expense_agent.voice "what's due soonest?"
+    uv run python -m taskmaster_agent.voice "what's due soonest?"
 """
 
 from __future__ import annotations
