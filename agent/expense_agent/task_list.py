@@ -15,7 +15,10 @@ import datetime as dt
 import json
 from pathlib import Path
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 MD_PATH = _AGENT_ROOT / "TASK_LIST.md"
 JSON_PATH = _AGENT_ROOT / "task_list.json"
 

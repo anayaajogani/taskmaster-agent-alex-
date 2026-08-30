@@ -109,13 +109,18 @@ def build_study_plan(view: dict, cfg: dict) -> dict:
     }
 
 
-def upcoming_modules(current_term: str = "Fall 2026") -> list[dict]:
+def upcoming_modules(current_term: str | None = None) -> list[dict]:
     """Modules that aren't open yet, with unlock dates when Canvas gives them.
 
     Answers "what's coming next week" instead of silently hiding locked work.
     """
-    from .canvas_poller import fetch_active_courses, _get, is_teaching_role
+    from .canvas_poller import (
+        fetch_active_courses, _get, is_teaching_role, in_term, current_term_name
+    )
     from .onboarding import load_config
+
+    if current_term is None:
+        current_term = current_term_name()
 
     cfg = load_config()
     excluded = [e.lower().strip() for e in cfg.get("excluded_courses", []) if e.strip()]
@@ -123,7 +128,7 @@ def upcoming_modules(current_term: str = "Fall 2026") -> list[dict]:
 
     for course in fetch_active_courses():
         name = course.get("name") or ""
-        if current_term and current_term not in name:
+        if not in_term(course, current_term):
             continue
         if is_teaching_role(course):
             continue

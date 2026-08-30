@@ -17,7 +17,10 @@ import datetime as dt
 import json
 from pathlib import Path
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 CALENDAR_JSON = _AGENT_ROOT / "calendar_view.json"
 
 # Same tiers as the Google Calendar colorIds, expressed as names the UI maps

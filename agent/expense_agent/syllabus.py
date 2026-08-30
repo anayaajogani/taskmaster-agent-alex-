@@ -30,7 +30,10 @@ import requests
 
 from .canvas_poller import _get, fetch_active_courses, CANVAS_BASE_URL, _headers
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 SYLLABUS_CACHE = _AGENT_ROOT / "syllabus_analysis.json"
 
 # Gemini via the same key the agent already uses.
@@ -101,8 +104,28 @@ def fetch_file_text(file_obj: dict) -> str:
     return ""
 
 
-def gather_syllabus_text(course_id: int) -> tuple[str, str]:
-    """Return (text, source_label)."""
+def gather_syllabus_text(course_id: int, course_name: str = "") -> tuple[str, str]:
+    """Return (text, source_label).
+
+    Checks, in order:
+      1. a syllabus file the student dropped in syllabi/ — most reliable, since
+         instructors usually hand out a PDF and leave Canvas's syllabus page blank
+      2. the Canvas syllabus page
+      3. syllabus files in Canvas Files (often blocked for students)
+    """
+    if course_name:
+        try:
+            from .manual_sources import (
+                list_syllabus_files, match_course, extract_text, SYLLABI_DIR
+            )
+            hit = match_course(course_name, list_syllabus_files())
+            if hit:
+                text = extract_text(SYLLABI_DIR / hit["file"])
+                if len(text) > 200:
+                    return text[:20000], f"your file: {hit['file']}"
+        except Exception:
+            pass
+
     body = fetch_syllabus_body(course_id)
     if len(body) > 200:
         return body[:20000], "syllabus page"
@@ -218,7 +241,7 @@ def analyze_all_courses(only_current: bool = True) -> dict:
             continue
 
         print(f"  Reading syllabus: {name[:50]}...")
-        text, source = gather_syllabus_text(cid)
+        text, source = gather_syllabus_text(cid, name)
         analysis = analyze_with_gemini(text)
         analysis = verify_analysis(analysis, text)
         analysis["source"] = source

@@ -1,17 +1,25 @@
 {
-  "priority_mode": "grade",
-  "lead_time_days": 5,
-  "reminder_style": "ramping",
+  "priority_mode": "urgency",
+  "lead_time_days": 7,
+  "reminder_style": "persistent",
   "work_day_start": 9,
   "work_day_end": 21,
   "off_days": [],
   "priority_courses": [
     "data 89"
   ],
-  "excluded_courses": [
-    "Special Topics in American Cultures"
+  "taking_courses": [
+    "American Poetry (Fall 2026)",
+    "Data 89",
+    "Stat 131a",
+    "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)"
   ],
-  "non_canvas_courses": "no",
-  "daily_cap_hours": 4,
+  "tutoring_courses": [
+    "Special Topics in American Cultures (Fall 2026)",
+    "Technology Entrepreneurship (Fall 2026)"
+  ],
+  "excluded_courses": [],
+  "non_canvas_courses": "data 89 and stat 133",
+  "daily_cap_hours": 6,
   "effort_padding": 1.2
 }

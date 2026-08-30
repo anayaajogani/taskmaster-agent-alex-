@@ -1,22 +1,97 @@
 {
-  "generated_at": "2026-08-30T12:11:56.712301-07:00",
+  "generated_at": "2026-08-30T16:18:09.840784-07:00",
   "date": "2026-08-30",
-  "daily_cap_hours": 4,
+  "daily_cap_hours": 6,
   "active": [
+    {
+      "title": "HW 1",
+      "course": "Stat 131a",
+      "due": "Mon Aug 31 04:59 PM",
+      "due_date": "2026-08-31",
+      "days_left": 1,
+      "start_date": "2026-08-24",
+      "hours": 2.6,
+      "score": 1.9447,
+      "from_syllabus": false,
+      "priority_course": false,
+      "work_type": "coursework",
+      "overdue_start": true,
+      "tier": "HIGH"
+    },
+    {
+      "title": "Exam",
+      "course": "Stat 131a",
+      "due": "Mon Aug 31 04:59 PM",
+      "due_date": "2026-08-31",
+      "days_left": 1,
+      "start_date": "2026-08-24",
+      "hours": 2.6,
+      "score": 1.9447,
+      "from_syllabus": false,
+      "priority_course": false,
+      "work_type": "coursework",
+      "overdue_start": true,
+      "tier": "HIGH"
+    },
+    {
+      "title": "Quiz Prereq Quiz (9/1 - 9/3)",
+      "course": "Data 89",
+      "due": "Tue Sep 01 04:59 PM",
+      "due_date": "2026-09-01",
+      "days_left": 2,
+      "start_date": "2026-08-25",
+      "hours": 2.9,
+      "score": 1.479,
+      "from_syllabus": false,
+      "priority_course": true,
+      "work_type": "coursework",
+      "overdue_start": true,
+      "tier": "HIGH"
+    },
+    {
+      "title": "Discussion 1 Unions, intersections, and Complements",
+      "course": "Data 89",
+      "due": "Wed Sep 02 04:59 PM",
+      "due_date": "2026-09-02",
+      "days_left": 3,
+      "start_date": "2026-08-26",
+      "hours": 2.9,
+      "score": 0.9906,
+      "from_syllabus": false,
+      "priority_course": true,
+      "work_type": "coursework",
+      "overdue_start": true,
+      "tier": "MEDIUM"
+    },
+    {
+      "title": "HW 1",
+      "course": "Stat 131a",
+      "due": "Fri Sep 04 04:59 PM",
+      "due_date": "2026-09-04",
+      "days_left": 5,
+      "start_date": "2026-08-28",
+      "hours": 2.6,
+      "score": 0.3977,
+      "from_syllabus": false,
+      "priority_course": false,
+      "work_type": "coursework",
+      "overdue_start": true,
+      "tier": "LOW"
+    },
     {
       "title": "Who Got Funded - Week 2",
       "course": "Technology Entrepreneurship (Fall 2026)",
       "due": "Fri Sep 04 01:00 PM",
       "due_date": "2026-09-04",
       "days_left": 5,
-      "start_date": "2026-08-30",
+      "start_date": "2026-08-28",
       "hours": 2.9,
-      "score": 0.298,
+      "score": 0.3085,
       "from_syllabus": false,
       "priority_course": false,
       "work_type": "teaching",
-      "overdue_start": false,
-      "tier": "HIGH"
+      "overdue_start": true,
+      "tier": "LOW"
     },
     {
       "title": "Reflection Paper - EcoWash",
@@ -24,250 +99,348 @@
       "due": "Fri Sep 04 02:00 PM",
       "due_date": "2026-09-04",
       "days_left": 5,
-      "start_date": "2026-08-30",
+      "start_date": "2026-08-28",
       "hours": 2.9,
-      "score": 0.2956,
+      "score": 0.3059,
       "from_syllabus": false,
       "priority_course": false,
       "work_type": "teaching",
-      "overdue_start": false,
+      "overdue_start": true,
       "tier": "LOW"
     }
   ],
   "upcoming": [
     {
-      "title": "Midterm 1",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Thu Sep 24 07:00 PM",
-      "due_date": "2026-09-24",
-      "days_left": 25,
-      "start_date": "2026-09-19",
+      "title": "Homework 2 Distributions and Models",
+      "course": "Data 89",
+      "due": "Mon Sep 07 04:59 PM",
+      "due_date": "2026-09-07",
+      "days_left": 8,
+      "start_date": "2026-08-31",
       "hours": 2.9,
-      "score": 0.0573,
+      "score": 0.3737,
+      "from_syllabus": false,
+      "priority_course": true,
+      "work_type": "coursework",
+      "overdue_start": false,
+      "opens_in_days": 1
+    },
+    {
+      "title": "HW 2",
+      "course": "Stat 131a",
+      "due": "Mon Sep 07 04:59 PM",
+      "due_date": "2026-09-07",
+      "days_left": 8,
+      "start_date": "2026-08-31",
+      "hours": 2.6,
+      "score": 0.2491,
       "from_syllabus": false,
       "priority_course": false,
       "work_type": "coursework",
       "overdue_start": false,
-      "opens_in_days": 20
+      "opens_in_days": 1
     },
     {
-      "title": "Research Project Application (Alternative to Final Exam)",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Fri Oct 09 04:59 PM",
-      "due_date": "2026-10-09",
-      "days_left": 40,
-      "start_date": "2026-10-04",
+      "title": "Quiz Quiz 1 (9/8 - 9/10)",
+      "course": "Data 89",
+      "due": "Tue Sep 08 04:59 PM",
+      "due_date": "2026-09-08",
+      "days_left": 9,
+      "start_date": "2026-09-01",
       "hours": 2.9,
-      "score": 0.0361,
-      "from_syllabus": true,
-      "priority_course": false,
+      "score": 0.3323,
+      "from_syllabus": false,
+      "priority_course": true,
       "work_type": "coursework",
       "overdue_start": false,
-      "opens_in_days": 35
+      "opens_in_days": 2
     },
     {
-      "title": "Midterm 2",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Thu Oct 29 07:00 PM",
-      "due_date": "2026-10-29",
-      "days_left": 60,
-      "start_date": "2026-10-24",
+      "title": "Discussion 2 Bayes Rule and Discrete Distributions",
+      "course": "Data 89",
+      "due": "Wed Sep 09 04:59 PM",
+      "due_date": "2026-09-09",
+      "days_left": 10,
+      "start_date": "2026-09-02",
       "hours": 2.9,
-      "score": 0.0241,
+      "score": 0.2991,
+      "from_syllabus": false,
+      "priority_course": true,
+      "work_type": "coursework",
+      "overdue_start": false,
+      "opens_in_days": 3
+    },
+    {
+      "title": "HW 2",
+      "course": "Stat 131a",
+      "due": "Fri Sep 11 04:59 PM",
+      "due_date": "2026-09-11",
+      "days_left": 12,
+      "start_date": "2026-09-04",
+      "hours": 2.6,
+      "score": 0.1663,
       "from_syllabus": false,
       "priority_course": false,
       "work_type": "coursework",
       "overdue_start": false,
-      "opens_in_days": 55
+      "opens_in_days": 5
     },
     {
-      "title": "Research Project Outline & Annotated Bibliography",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Fri Oct 30 04:59 PM",
-      "due_date": "2026-10-30",
-      "days_left": 61,
-      "start_date": "2026-10-25",
-      "hours": 2.9,
-      "score": 0.0237,
-      "from_syllabus": true,
+      "title": "HW 3",
+      "course": "Stat 131a",
+      "due": "Mon Sep 14 04:59 PM",
+      "due_date": "2026-09-14",
+      "days_left": 15,
+      "start_date": "2026-09-07",
+      "hours": 2.6,
+      "score": 0.1331,
+      "from_syllabus": false,
       "priority_course": false,
       "work_type": "coursework",
       "overdue_start": false,
-      "opens_in_days": 56
+      "opens_in_days": 8
     },
     {
-      "title": "Research Project Rough Draft",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Mon Nov 23 03:59 PM",
-      "due_date": "2026-11-23",
-      "days_left": 85,
-      "start_date": "2026-11-18",
+      "title": "Discussion 3 Visualizing Distributions",
+      "course": "Data 89",
+      "due": "Wed Sep 16 04:59 PM",
+      "due_date": "2026-09-16",
+      "days_left": 17,
+      "start_date": "2026-09-09",
       "hours": 2.9,
-      "score": 0.017,
-      "from_syllabus": true,
+      "score": 0.1762,
+      "from_syllabus": false,
+      "priority_course": true,
+      "work_type": "coursework",
+      "overdue_start": false,
+      "opens_in_days": 10
+    },
+    {
+      "title": "HW 3",
+      "course": "Stat 131a",
+      "due": "Fri Sep 18 04:59 PM",
+      "due_date": "2026-09-18",
+      "days_left": 19,
+      "start_date": "2026-09-11",
+      "hours": 2.6,
+      "score": 0.1051,
+      "from_syllabus": false,
       "priority_course": false,
       "work_type": "coursework",
       "overdue_start": false,
-      "opens_in_days": 80
-    },
-    {
-      "title": "Final Exam",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Tue Dec 15 03:59 PM",
-      "due_date": "2026-12-15",
-      "days_left": 107,
-      "start_date": "2026-12-10",
-      "hours": 2.9,
-      "score": 0.0135,
-      "from_syllabus": true,
-      "priority_course": false,
-      "work_type": "coursework",
-      "overdue_start": false,
-      "opens_in_days": 102
-    },
-    {
-      "title": "Research Project Final Draft",
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "due": "Tue Dec 15 03:59 PM",
-      "due_date": "2026-12-15",
-      "days_left": 107,
-      "start_date": "2026-12-10",
-      "hours": 2.9,
-      "score": 0.0135,
-      "from_syllabus": true,
-      "priority_course": false,
-      "work_type": "coursework",
-      "overdue_start": false,
-      "opens_in_days": 102
+      "opens_in_days": 12
     }
   ],
-  "materials": [
-    {
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "module": "Orientation",
-      "title": "Orientation Page",
-      "type": "Page",
-      "label": "read",
-      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806138"
-    },
-    {
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "module": "Orientation",
-      "title": "Academic Integrity Premise",
-      "type": "Page",
-      "label": "read",
-      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806139"
-    },
-    {
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "module": "Orientation",
-      "title": "Academic Integrity Pledge",
-      "type": "Quiz",
-      "label": "quiz",
-      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806140"
-    },
-    {
-      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-      "module": "Orientation",
-      "title": "Key Course Policies Quiz",
-      "type": "Quiz",
-      "label": "quiz",
-      "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806141"
-    }
-  ],
+  "materials": [],
   "study_plan": {
-    "cap_hours": 4,
-    "deadline_minutes": 70,
-    "free_minutes": 170,
-    "planned_minutes": 90,
-    "picks": [
-      {
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "module": "Orientation",
-        "title": "Academic Integrity Pledge",
-        "type": "Quiz",
-        "label": "quiz",
-        "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806140",
-        "est_minutes": 20
-      },
-      {
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "module": "Orientation",
-        "title": "Key Course Policies Quiz",
-        "type": "Quiz",
-        "label": "quiz",
-        "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806141",
-        "est_minutes": 20
-      },
-      {
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "module": "Orientation",
-        "title": "Orientation Page",
-        "type": "Page",
-        "label": "read",
-        "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806138",
-        "est_minutes": 25
-      },
-      {
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "module": "Orientation",
-        "title": "Academic Integrity Premise",
-        "type": "Page",
-        "label": "read",
-        "url": "https://bcourses.berkeley.edu/courses/1557692/modules/items/17806139",
-        "est_minutes": 25
-      }
-    ],
+    "cap_hours": 6,
+    "deadline_minutes": 558,
+    "free_minutes": 0,
+    "planned_minutes": 0,
+    "picks": [],
     "not_today": 0
   },
   "calendar": {
-    "generated_at": "2026-08-30T12:11:57.369331-07:00",
+    "generated_at": "2026-08-30T16:18:10.394486-07:00",
     "calendar_name": "Taskmaster",
     "events": [
       {
-        "title": "Work: Who Got Funded - Week 2 (Technology Entrepreneurship (Fall 2026))",
-        "start": "2026-08-30T13:00:00-07:00",
-        "end": "2026-08-30T15:54:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.2979. Due Fri Sep 04 01:00 PM.",
-        "color_id": "9"
+        "title": "Prep: Quiz Prereq Quiz (9/1 - 9/3)",
+        "start": "2026-08-30T16:00:00-07:00",
+        "end": "2026-08-30T16:48:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 1.4693. Due Tue Sep 01 04:59 PM.",
+        "color_id": "2"
       },
       {
-        "title": "Work: Reflection Paper - EcoWash (Technology Entrepreneurship (Fall 2026))",
-        "start": "2026-08-30T14:00:00-07:00",
-        "end": "2026-08-30T15:06:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.2954. Due Fri Sep 04 02:00 PM.",
-        "color_id": "9"
+        "title": "Work on: HW 1",
+        "start": "2026-08-30T16:00:00-07:00",
+        "end": "2026-08-30T18:36:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 1.9197. Due Mon Aug 31 04:59 PM.",
+        "color_id": "6"
       },
       {
-        "title": "Work: Reflection Paper - EcoWash (Technology Entrepreneurship (Fall 2026))",
+        "title": "Prep: Exam",
+        "start": "2026-08-30T16:00:00-07:00",
+        "end": "2026-08-30T18:36:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 1.9197. Due Mon Aug 31 04:59 PM.",
+        "color_id": "6"
+      },
+      {
+        "title": "Prep: Quiz Prereq Quiz (9/1 - 9/3)",
         "start": "2026-08-31T09:00:00-07:00",
-        "end": "2026-08-31T10:48:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.2954. Due Fri Sep 04 02:00 PM.",
-        "color_id": "9"
+        "end": "2026-08-31T11:06:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 1.4693. Due Tue Sep 01 04:59 PM.",
+        "color_id": "2"
       },
       {
-        "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
-        "start": "2026-09-19T16:59:00-07:00",
-        "end": "2026-09-19T19:53:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.0575. Due Thu Sep 24 04:59 PM.",
+        "title": "Work on: Discussion 1 Unions, intersections, and Complements",
+        "start": "2026-08-31T09:00:00-07:00",
+        "end": "2026-08-31T11:54:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.9862. Due Wed Sep 02 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: Homework 2 Distributions and Models",
+        "start": "2026-08-31T16:59:00-07:00",
+        "end": "2026-08-31T17:59:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.373. Due Mon Sep 07 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: Homework 2 Distributions and Models",
+        "start": "2026-09-01T09:00:00-07:00",
+        "end": "2026-09-01T10:54:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.373. Due Mon Sep 07 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: Who Got Funded - Week 2",
+        "start": "2026-09-01T09:00:00-07:00",
+        "end": "2026-09-01T10:12:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.3076. Due Fri Sep 04 01:00 PM.",
+        "color_id": "5"
+      },
+      {
+        "title": "Prep: Quiz Quiz 1 (9/8 - 9/10)",
+        "start": "2026-09-01T16:59:00-07:00",
+        "end": "2026-09-01T19:53:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.3318. Due Tue Sep 08 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: Reflection Paper - EcoWash",
+        "start": "2026-09-02T09:00:00-07:00",
+        "end": "2026-09-02T11:54:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.305. Due Fri Sep 04 02:00 PM.",
+        "color_id": "5"
+      },
+      {
+        "title": "Work on: Who Got Funded - Week 2",
+        "start": "2026-09-02T09:00:00-07:00",
+        "end": "2026-09-02T10:42:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.3076. Due Fri Sep 04 01:00 PM.",
+        "color_id": "5"
+      },
+      {
+        "title": "Work on: Discussion 2 Bayes Rule and Discrete Distributions",
+        "start": "2026-09-02T16:59:00-07:00",
+        "end": "2026-09-02T18:23:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.2987. Due Wed Sep 09 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: Discussion 2 Bayes Rule and Discrete Distributions",
+        "start": "2026-09-03T09:00:00-07:00",
+        "end": "2026-09-03T10:30:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.2987. Due Wed Sep 09 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: HW 2",
+        "start": "2026-09-03T09:00:00-07:00",
+        "end": "2026-09-03T11:36:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.2487. Due Mon Sep 07 04:59 PM.",
+        "color_id": "6"
+      },
+      {
+        "title": "Work on: HW 3",
+        "start": "2026-09-07T16:59:00-07:00",
+        "end": "2026-09-07T19:35:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.133. Due Mon Sep 14 04:59 PM.",
+        "color_id": "6"
+      },
+      {
+        "title": "Work on: Discussion 3 Visualizing Distributions",
+        "start": "2026-09-09T16:59:00-07:00",
+        "end": "2026-09-09T19:53:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.176. Due Wed Sep 16 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Work on: HW 4",
+        "start": "2026-09-14T16:59:00-07:00",
+        "end": "2026-09-14T19:35:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.0907. Due Mon Sep 21 04:59 PM.",
+        "color_id": "6"
+      },
+      {
+        "title": "Work on: Paper One",
+        "start": "2026-09-15T09:00:59-07:00",
+        "end": "2026-09-15T11:54:59-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.0672. Due Mon Sep 21 11:59 PM.",
+        "color_id": "4"
+      },
+      {
+        "title": "Work on: Discussion 4 Functions and Expectation",
+        "start": "2026-09-16T16:59:00-07:00",
+        "end": "2026-09-16T19:53:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.1248. Due Wed Sep 23 04:59 PM.",
+        "color_id": "2"
+      },
+      {
+        "title": "Prep: Midterm 1",
+        "start": "2026-09-17T19:00:00-07:00",
+        "end": "2026-09-17T21:00:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.0796. Due Thu Sep 24 07:00 PM.",
         "color_id": "10"
       },
       {
-        "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
-        "start": "2026-09-19T19:00:00-07:00",
-        "end": "2026-09-19T20:06:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.0573. Due Thu Sep 24 07:00 PM.",
-        "color_id": "10"
-      },
-      {
-        "title": "Work: Midterm 1 (Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026))",
-        "start": "2026-09-20T09:00:00-07:00",
-        "end": "2026-09-20T10:48:00-07:00",
-        "description": "Auto-scheduled by Taskmaster. Rank 0.0573. Due Thu Sep 24 07:00 PM.",
+        "title": "Prep: Midterm 1",
+        "start": "2026-09-18T09:00:00-07:00",
+        "end": "2026-09-18T09:54:00-07:00",
+        "description": "Auto-scheduled by Taskmaster. Rank 0.0796. Due Thu Sep 24 07:00 PM.",
         "color_id": "10"
       }
     ],
     "deadlines": [
+      {
+        "title": "HW 1",
+        "course": "Stat 131a",
+        "due_label": "Mon Aug 31 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Exam",
+        "course": "Stat 131a",
+        "due_label": "Mon Aug 31 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Quiz Prereq Quiz (9/1 - 9/3)",
+        "course": "Data 89",
+        "due_label": "Tue Sep 01 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Discussion 1 Unions, intersections, and Complements",
+        "course": "Data 89",
+        "due_label": "Wed Sep 02 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Homework 2 Distributions and Models",
+        "course": "Data 89",
+        "due_label": "Mon Sep 07 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Quiz Quiz 1 (9/8 - 9/10)",
+        "course": "Data 89",
+        "due_label": "Tue Sep 08 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
       {
         "title": "Who Got Funded - Week 2",
         "course": "Technology Entrepreneurship (Fall 2026)",
@@ -285,12 +458,92 @@
         "priority_course": false
       },
       {
-        "title": "Midterm 1",
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "due_label": "Thu Sep 24 04:59 PM",
+        "title": "Discussion 2 Bayes Rule and Discrete Distributions",
+        "course": "Data 89",
+        "due_label": "Wed Sep 09 04:59 PM",
         "hours": 2.9,
-        "from_syllabus": true,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 2",
+        "course": "Stat 131a",
+        "due_label": "Mon Sep 07 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
         "priority_course": false
+      },
+      {
+        "title": "Discussion 3 Visualizing Distributions",
+        "course": "Data 89",
+        "due_label": "Wed Sep 16 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 3",
+        "course": "Stat 131a",
+        "due_label": "Mon Sep 14 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Discussion 4 Functions and Expectation",
+        "course": "Data 89",
+        "due_label": "Wed Sep 23 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Exam",
+        "course": "Data 89",
+        "due_label": "Mon Sep 28 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Homework 5 Variance and SD",
+        "course": "Data 89",
+        "due_label": "Mon Sep 28 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Discussion 5 Expectation and Variance",
+        "course": "Data 89",
+        "due_label": "Wed Sep 30 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Quiz Retake Quiz 2 Retake (10/1 - 10/2)",
+        "course": "Data 89",
+        "due_label": "Thu Oct 01 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 4",
+        "course": "Stat 131a",
+        "due_label": "Mon Sep 21 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Homework 6 Tails, Asymptotics, and Series",
+        "course": "Data 89",
+        "due_label": "Mon Oct 05 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
       },
       {
         "title": "Midterm 1",
@@ -301,11 +554,131 @@
         "priority_course": false
       },
       {
+        "title": "Paper One",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Mon Sep 21 11:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Discussion 7 Approximate and Limiting Chances",
+        "course": "Data 89",
+        "due_label": "Wed Oct 14 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Midterm 1 in CBTF offered today",
+        "course": "Stat 131a",
+        "due_label": "Thu Oct 01 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Homework 8 Integration Techniques",
+        "course": "Data 89",
+        "due_label": "Mon Oct 19 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 5",
+        "course": "Stat 131a",
+        "due_label": "Mon Oct 05 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Homework 9 Multiple Variables",
+        "course": "Data 89",
+        "due_label": "Mon Oct 26 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Discussion 9 Working with Multiple Variables",
+        "course": "Data 89",
+        "due_label": "Wed Oct 28 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Quiz Retake Quiz 4 Retake (10/29 - 10/30)",
+        "course": "Data 89",
+        "due_label": "Thu Oct 29 04:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
         "title": "Research Project Application (Alternative to Final Exam)",
         "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
         "due_label": "Fri Oct 09 04:59 PM",
         "hours": 2.9,
         "from_syllabus": true,
+        "priority_course": false
+      },
+      {
+        "title": "HW 6",
+        "course": "Stat 131a",
+        "due_label": "Mon Oct 12 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Discussion 10 Joint Densities and Gradients",
+        "course": "Data 89",
+        "due_label": "Wed Nov 04 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 7",
+        "course": "Stat 131a",
+        "due_label": "Mon Oct 19 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Discussion 11 Double Integrals",
+        "course": "Data 89",
+        "due_label": "Wed Nov 18 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Quiz Retake Quiz 6 Retake (11/23 - 11/24)",
+        "course": "Data 89",
+        "due_label": "Mon Nov 23 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Midterm 2 in CBTF offered today",
+        "course": "Stat 131a",
+        "due_label": "Mon Oct 26 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "HW 8",
+        "course": "Stat 131a",
+        "due_label": "Wed Oct 28 04:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
         "priority_course": false
       },
       {
@@ -317,11 +690,11 @@
         "priority_course": false
       },
       {
-        "title": "Midterm 2",
-        "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
-        "due_label": "Thu Oct 29 04:59 PM",
+        "title": "Paper Two",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Wed Oct 14 11:59 PM",
         "hours": 2.9,
-        "from_syllabus": true,
+        "from_syllabus": false,
         "priority_course": false
       },
       {
@@ -333,11 +706,67 @@
         "priority_course": false
       },
       {
+        "title": "Discussion 12 Iterated Expectation and Sums of Random Variables",
+        "course": "Data 89",
+        "due_label": "Wed Dec 02 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Discussion 13",
+        "course": "Data 89",
+        "due_label": "Fri Dec 04 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "Quiz Retake Quiz 7 Retake (12/7 - 12/8)",
+        "course": "Data 89",
+        "due_label": "Mon Dec 07 03:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": true
+      },
+      {
+        "title": "HW 9",
+        "course": "Stat 131a",
+        "due_label": "Mon Nov 09 03:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "HW 10",
+        "course": "Stat 131a",
+        "due_label": "Mon Nov 16 03:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
         "title": "Research Project Rough Draft",
         "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
         "due_label": "Mon Nov 23 03:59 PM",
         "hours": 2.9,
         "from_syllabus": true,
+        "priority_course": false
+      },
+      {
+        "title": "Midterm 3 in CBTF offered today",
+        "course": "Stat 131a",
+        "due_label": "Wed Dec 02 03:59 PM",
+        "hours": 2.6,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Paper Three",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Mon Nov 16 11:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
         "priority_course": false
       },
       {
@@ -355,8 +784,86 @@
         "hours": 2.9,
         "from_syllabus": true,
         "priority_course": false
+      },
+      {
+        "title": "Golden Shovel",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Fri Nov 20 11:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Attendance",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Wed Dec 02 11:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": false
+      },
+      {
+        "title": "Paper Four",
+        "course": "Special Topics in American Cultures (Fall 2026)",
+        "due_label": "Mon Dec 07 11:59 PM",
+        "hours": 2.9,
+        "from_syllabus": false,
+        "priority_course": false
       }
     ],
     "has_calendar_access": true
+  },
+  "courses": [
+    {
+      "course": "American Poetry (Fall 2026)",
+      "work_type": "coursework",
+      "total_assignments": 0,
+      "upcoming": 0,
+      "has_work": false
+    },
+    {
+      "course": "Data 89",
+      "work_type": "coursework",
+      "total_assignments": 0,
+      "upcoming": 0,
+      "has_work": false
+    },
+    {
+      "course": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+      "work_type": "coursework",
+      "total_assignments": 19,
+      "upcoming": 2,
+      "has_work": true
+    },
+    {
+      "course": "Special Topics in American Cultures (Fall 2026)",
+      "work_type": "teaching",
+      "total_assignments": 6,
+      "upcoming": 6,
+      "has_work": true
+    },
+    {
+      "course": "Stat 131a",
+      "work_type": "coursework",
+      "total_assignments": 0,
+      "upcoming": 0,
+      "has_work": false
+    },
+    {
+      "course": "Technology Entrepreneurship (Fall 2026)",
+      "work_type": "teaching",
+      "total_assignments": 3,
+      "upcoming": 2,
+      "has_work": true
+    }
+  ],
+  "manual": {
+    "syllabi_dir": "/Users/anayaajogani/all-things-agentic/agent/syllabi",
+    "files": [],
+    "course_urls": {
+      "SHAPE Student Training - UCB - 2026-2027": "https://data89.org/sp26/syllabus/",
+      "Data 89": "https://data89.org/fa26/",
+      "Stat 131a": "https://stat131a.berkeley.edu/fall-2026/"
+    },
+    "pypdf_available": false
   }
 }

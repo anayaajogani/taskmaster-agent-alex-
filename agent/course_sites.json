@@ -1,0 +1,364 @@
+{
+  "scraped_at": "2026-08-30T15:50:16.722995-07:00",
+  "results": {
+    "SHAPE Student Training - UCB - 2026-2027": {
+      "course": "SHAPE Student Training - UCB - 2026-2027",
+      "url": "https://data89.org/sp26/syllabus/",
+      "ok": false,
+      "reason": "no dated schedule found on this page \u2014 the site may load its calendar with JavaScript, or use a layout this parser doesn't recognise",
+      "items": []
+    },
+    "Data 89": {
+      "course": "Data 89",
+      "url": "https://data89.org/fa26/",
+      "ok": true,
+      "reason": "parsed 24 dated items",
+      "items": [
+        {
+          "title": "Homework 1",
+          "type": "problem set",
+          "due_date": "2026-08-27",
+          "course": "Data 89",
+          "evidence": "Homework 1"
+        },
+        {
+          "title": "Quiz Prereq Quiz (9/1 - 9/3)",
+          "type": "quiz",
+          "due_date": "2026-09-01",
+          "course": "Data 89",
+          "evidence": "Quiz**Prereq Quiz (9/1 - 9/3) |"
+        },
+        {
+          "title": "Discussion 1 Unions, intersections, and Complements",
+          "type": "discussion",
+          "due_date": "2026-09-02",
+          "course": "Data 89",
+          "evidence": "Discussion 1** Unions, intersections, and Complements |"
+        },
+        {
+          "title": "Homework 2 Distributions and Models",
+          "type": "problem set",
+          "due_date": "2026-09-07",
+          "course": "Data 89",
+          "evidence": "Homework 2** Distributions and Models |"
+        },
+        {
+          "title": "Quiz Quiz 1 (9/8 - 9/10)",
+          "type": "quiz",
+          "due_date": "2026-09-08",
+          "course": "Data 89",
+          "evidence": "Quiz**Quiz 1 (9/8 - 9/10) |"
+        },
+        {
+          "title": "Discussion 2 Bayes Rule and Discrete Distributions",
+          "type": "discussion",
+          "due_date": "2026-09-09",
+          "course": "Data 89",
+          "evidence": "Discussion 2** Bayes Rule and Discrete Distributions |"
+        },
+        {
+          "title": "Discussion 3 Visualizing Distributions",
+          "type": "discussion",
+          "due_date": "2026-09-16",
+          "course": "Data 89",
+          "evidence": "Discussion 3** Visualizing Distributions |"
+        },
+        {
+          "title": "Discussion 4 Functions and Expectation",
+          "type": "discussion",
+          "due_date": "2026-09-23",
+          "course": "Data 89",
+          "evidence": "Discussion 4** Functions and Expectation |"
+        },
+        {
+          "title": "Exam",
+          "type": "exam",
+          "due_date": "2026-09-28",
+          "course": "Data 89",
+          "evidence": "Exam"
+        },
+        {
+          "title": "Homework 5 Variance and SD",
+          "type": "problem set",
+          "due_date": "2026-09-28",
+          "course": "Data 89",
+          "evidence": "Homework 5** Variance and SD |"
+        },
+        {
+          "title": "Discussion 5 Expectation and Variance",
+          "type": "discussion",
+          "due_date": "2026-09-30",
+          "course": "Data 89",
+          "evidence": "Discussion 5** Expectation and Variance |"
+        },
+        {
+          "title": "Quiz Retake Quiz 2 Retake (10/1 - 10/2)",
+          "type": "quiz",
+          "due_date": "2026-10-01",
+          "course": "Data 89",
+          "evidence": "Quiz Retake**Quiz 2 Retake (10/1 - 10/2) |"
+        },
+        {
+          "title": "Homework 6 Tails, Asymptotics, and Series",
+          "type": "problem set",
+          "due_date": "2026-10-05",
+          "course": "Data 89",
+          "evidence": "Homework 6** Tails, Asymptotics, and Series |"
+        },
+        {
+          "title": "Discussion 7 Approximate and Limiting Chances",
+          "type": "discussion",
+          "due_date": "2026-10-14",
+          "course": "Data 89",
+          "evidence": "Discussion 7** Approximate and Limiting Chances |"
+        },
+        {
+          "title": "Homework 8 Integration Techniques",
+          "type": "problem set",
+          "due_date": "2026-10-19",
+          "course": "Data 89",
+          "evidence": "Homework 8** Integration Techniques |"
+        },
+        {
+          "title": "Homework 9 Multiple Variables",
+          "type": "problem set",
+          "due_date": "2026-10-26",
+          "course": "Data 89",
+          "evidence": "Homework 9** Multiple Variables |"
+        },
+        {
+          "title": "Discussion 9 Working with Multiple Variables",
+          "type": "discussion",
+          "due_date": "2026-10-28",
+          "course": "Data 89",
+          "evidence": "Discussion 9** Working with Multiple Variables |"
+        },
+        {
+          "title": "Quiz Retake Quiz 4 Retake (10/29 - 10/30)",
+          "type": "quiz",
+          "due_date": "2026-10-29",
+          "course": "Data 89",
+          "evidence": "Quiz Retake**Quiz 4 Retake (10/29 - 10/30) |"
+        },
+        {
+          "title": "Discussion 10 Joint Densities and Gradients",
+          "type": "discussion",
+          "due_date": "2026-11-04",
+          "course": "Data 89",
+          "evidence": "Discussion 10** Joint Densities and Gradients |"
+        },
+        {
+          "title": "Discussion 11 Double Integrals",
+          "type": "discussion",
+          "due_date": "2026-11-18",
+          "course": "Data 89",
+          "evidence": "Discussion 11** Double Integrals |"
+        },
+        {
+          "title": "Quiz Retake Quiz 6 Retake (11/23 - 11/24)",
+          "type": "quiz",
+          "due_date": "2026-11-23",
+          "course": "Data 89",
+          "evidence": "Quiz Retake**Quiz 6 Retake (11/23 - 11/24) |"
+        },
+        {
+          "title": "Discussion 12 Iterated Expectation and Sums of Random Variables",
+          "type": "discussion",
+          "due_date": "2026-12-02",
+          "course": "Data 89",
+          "evidence": "Discussion 12** Iterated Expectation and Sums of Random Variables |"
+        },
+        {
+          "title": "Discussion 13",
+          "type": "discussion",
+          "due_date": "2026-12-04",
+          "course": "Data 89",
+          "evidence": "Discussion 13"
+        },
+        {
+          "title": "Quiz Retake Quiz 7 Retake (12/7 - 12/8)",
+          "type": "quiz",
+          "due_date": "2026-12-07",
+          "course": "Data 89",
+          "evidence": "Quiz Retake**Quiz 7 Retake (12/7 - 12/8) |"
+        }
+      ]
+    },
+    "Stat 131a": {
+      "course": "Stat 131a",
+      "url": "https://stat131a.berkeley.edu/fall-2026/",
+      "ok": true,
+      "reason": "parsed 24 dated items",
+      "items": [
+        {
+          "title": "HW 1",
+          "type": "problem set",
+          "due_date": "2026-08-31",
+          "course": "Stat 131a",
+          "evidence": "HW 1**"
+        },
+        {
+          "title": "Exam",
+          "type": "exam",
+          "due_date": "2026-08-31",
+          "course": "Stat 131a",
+          "evidence": "Exam**"
+        },
+        {
+          "title": "HW 1",
+          "type": "problem set",
+          "due_date": "2026-09-04",
+          "course": "Stat 131a",
+          "evidence": "HW 1**"
+        },
+        {
+          "title": "HW 2",
+          "type": "problem set",
+          "due_date": "2026-09-07",
+          "course": "Stat 131a",
+          "evidence": "HW 2**"
+        },
+        {
+          "title": "HW 2",
+          "type": "problem set",
+          "due_date": "2026-09-11",
+          "course": "Stat 131a",
+          "evidence": "HW 2**"
+        },
+        {
+          "title": "HW 3",
+          "type": "problem set",
+          "due_date": "2026-09-14",
+          "course": "Stat 131a",
+          "evidence": "HW 3**"
+        },
+        {
+          "title": "HW 3",
+          "type": "problem set",
+          "due_date": "2026-09-18",
+          "course": "Stat 131a",
+          "evidence": "HW 3**"
+        },
+        {
+          "title": "HW 4",
+          "type": "problem set",
+          "due_date": "2026-09-21",
+          "course": "Stat 131a",
+          "evidence": "HW 4**"
+        },
+        {
+          "title": "HW 4",
+          "type": "problem set",
+          "due_date": "2026-09-30",
+          "course": "Stat 131a",
+          "evidence": "HW 4**"
+        },
+        {
+          "title": "Midterm 1 in CBTF offered today",
+          "type": "exam",
+          "due_date": "2026-10-01",
+          "course": "Stat 131a",
+          "evidence": "Midterm 1 in CBTF offered today"
+        },
+        {
+          "title": "HW 5",
+          "type": "problem set",
+          "due_date": "2026-10-05",
+          "course": "Stat 131a",
+          "evidence": "HW 5**"
+        },
+        {
+          "title": "HW 5",
+          "type": "problem set",
+          "due_date": "2026-10-09",
+          "course": "Stat 131a",
+          "evidence": "HW 5**"
+        },
+        {
+          "title": "HW 6",
+          "type": "problem set",
+          "due_date": "2026-10-12",
+          "course": "Stat 131a",
+          "evidence": "HW 6**"
+        },
+        {
+          "title": "HW 6",
+          "type": "problem set",
+          "due_date": "2026-10-16",
+          "course": "Stat 131a",
+          "evidence": "HW 6**"
+        },
+        {
+          "title": "HW 7",
+          "type": "problem set",
+          "due_date": "2026-10-19",
+          "course": "Stat 131a",
+          "evidence": "HW 7**"
+        },
+        {
+          "title": "HW 7",
+          "type": "problem set",
+          "due_date": "2026-10-23",
+          "course": "Stat 131a",
+          "evidence": "HW 7**"
+        },
+        {
+          "title": "Midterm 2 in CBTF offered today",
+          "type": "exam",
+          "due_date": "2026-10-26",
+          "course": "Stat 131a",
+          "evidence": "Midterm 2 in CBTF offered today"
+        },
+        {
+          "title": "HW 8",
+          "type": "problem set",
+          "due_date": "2026-10-28",
+          "course": "Stat 131a",
+          "evidence": "HW 8**"
+        },
+        {
+          "title": "HW 8",
+          "type": "problem set",
+          "due_date": "2026-11-06",
+          "course": "Stat 131a",
+          "evidence": "HW 8**"
+        },
+        {
+          "title": "HW 9",
+          "type": "problem set",
+          "due_date": "2026-11-09",
+          "course": "Stat 131a",
+          "evidence": "HW 9**"
+        },
+        {
+          "title": "HW 10",
+          "type": "problem set",
+          "due_date": "2026-11-16",
+          "course": "Stat 131a",
+          "evidence": "HW 10**"
+        },
+        {
+          "title": "HW 9",
+          "type": "problem set",
+          "due_date": "2026-11-16",
+          "course": "Stat 131a",
+          "evidence": "HW 9**"
+        },
+        {
+          "title": "HW 10",
+          "type": "problem set",
+          "due_date": "2026-11-24",
+          "course": "Stat 131a",
+          "evidence": "HW 10**"
+        },
+        {
+          "title": "Midterm 3 in CBTF offered today",
+          "type": "exam",
+          "due_date": "2026-12-02",
+          "course": "Stat 131a",
+          "evidence": "Midterm 3 in CBTF offered today"
+        }
+      ]
+    }
+  }
+}

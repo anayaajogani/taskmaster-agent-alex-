@@ -181,6 +181,148 @@
   .later-when { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
   .later-course { color: var(--muted); font-size: 12px; }
 
+  /* ---------- course roster ---------- */
+  .roster { border-top: 1px solid var(--line); padding-top: 28px; margin-top: 44px; }
+  .roster-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
+  }
+  .roster-row:last-child { border-bottom: none; }
+  .roster-state {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .roster-quiet { opacity: 0.62; }
+  .roster-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .roster-link:hover { border-bottom-color: var(--accent); }
+  .drop-note {
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .drop-note b { color: var(--paper); font-weight: 500; }
+  .drop-note code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    background: var(--raised);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--paper);
+  }
+  .dropzone {
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 22px 18px;
+    text-align: center;
+    margin-top: 16px;
+    transition: border-color .15s, background .15s;
+    cursor: pointer;
+  }
+  .dropzone:hover, .dropzone.over {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+  .dropzone h4 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 15px; font-weight: 600; margin: 0 0 5px;
+  }
+  .dropzone p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .url-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .url-row select, .url-row input {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--paper);
+    border-radius: 7px;
+    padding: 8px 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .url-row select { flex: 1 1 190px; }
+  .url-row input { flex: 2 1 240px; }
+  .url-row select:focus, .url-row input:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .url-row button {
+    background: var(--accent);
+    border: none;
+    color: var(--ink);
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    flex: none;
+  }
+  .url-row button:disabled { opacity: 0.5; cursor: default; }
+  .upload-msg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+  .upload-ok { color: var(--low); }
+  .upload-err { color: var(--high); }
+
+  .file-chip {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--low);
+    border: 1px solid color-mix(in srgb, var(--low) 40%, transparent);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 6px;
+  }
+
+  /* ---------- course grouping ---------- */
+  .course-group { margin-bottom: 26px; }
+  .course-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 8px;
+  }
+  .course-swatch {
+    width: 9px; height: 9px; border-radius: 2px; flex: none;
+  }
+  .course-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .course-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
   /* ---------- calendar ---------- */
   /* Colors are the SAME tiers as the task list, so the two views can't drift. */
   .cal { margin-bottom: 44px; }
@@ -207,7 +349,7 @@
   }
   .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
   }
   .cal-day {
@@ -529,14 +671,15 @@ function Runway({ task, today, color }) {
 }
 
 function Task({ task, today, color }) {
+  const cc = courseColor(task.course);
   return (
-    <div className="task">
+    <div className="task" style={{ borderLeft: `3px solid ${cc}` }}>
       <div className="task-top">
         <div className="title">{task.title}</div>
         <div className="hours">{task.hours}h</div>
       </div>
       <div className="meta">
-        <span>{task.course}</span>
+        <span style={{ color: cc }}>{shortCourse(task.course)}</span>
         <span>·</span>
         <span>{dueText(task.days_left)}</span>
         {task.priority_course && <span className="tag tag-pri">priority course</span>}
@@ -559,6 +702,31 @@ const TIER_COLOR = {
   priority: "var(--accent)",
   teaching: "#6FA8FF",
 };
+
+// Each course gets its own colour so the sections and the calendar agree.
+// Assignment is by hash of the course name, so a NEW course added in Canvas
+// picks up a colour automatically — nothing to configure.
+const COURSE_PALETTE = [
+  "#7EA6FF", "#FF8FA3", "#5FD3B4", "#FFC46B",
+  "#C79BFF", "#6FD8E8", "#F0918C", "#9EDB6E",
+];
+
+function courseColor(name) {
+  if (!name) return "var(--muted)";
+  let h = 0;
+  for (let i = 0; i < name.length; i++) {
+    h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return COURSE_PALETTE[h % COURSE_PALETTE.length];
+}
+
+// Strip the term suffix so headings read cleanly.
+function shortCourse(name) {
+  return (name || "")
+    .replace(/\s*\((Fall|Spring|Summer|Winter)\s+\d{4}\)\s*$/i, "")
+    .replace(/\s*-\s*DATA\/History\/STS\s*$/i, "")
+    .trim();
+}
 
 // Google Calendar colorIds -> our tiers (taskmaster_calendar.py writes these).
 const COLOR_ID_TIER = {
@@ -602,6 +770,12 @@ function Calendar({ data }) {
     const d = new Date(label + " " + weekStart.getFullYear());
     return isNaN(d) ? null : d;
   };
+
+  // Courses actually present, so the legend grows on its own when you add one.
+  const courseNames = Array.from(new Set([
+    ...events.map(e => { const m = e.title.match(/\(([^)]*)\)\s*$/); return m ? m[1] : ""; }),
+    ...deadlines.map(d => d.course || ""),
+  ].filter(Boolean)));
 
   const rangeLabel =
     days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" }) +
@@ -652,10 +826,10 @@ function Calendar({ data }) {
               <div className="cal-date">{d.getDate()}</div>
 
               {dayDue.map((dl, j) => {
-                const tier = dl.priority_course ? "priority" : tierForDate(parseDue(dl.due_label));
+                const dc = courseColor(dl.course);
                 return (
                   <div className="cal-due" key={"d" + j}
-                       style={{ color: TIER_COLOR[tier], borderColor: TIER_COLOR[tier] }}
+                       style={{ color: dc, borderColor: dc }}
                        title={dl.title + " due — " + (dl.course || "")}>
                     DUE {dl.title}
                   </div>
@@ -663,13 +837,14 @@ function Calendar({ data }) {
               })}
 
               {dayEvents.map((e, j) => {
-                const tier = COLOR_ID_TIER[e.color_id] || "upcoming";
+                const m = e.title.match(/\(([^)]*)\)\s*$/);
+                const evCourse = m ? m[1] : "";
                 const start = new Date(e.start);
                 const label = start.toLocaleTimeString(undefined,
                   { hour: "numeric", minute: "2-digit" });
                 return (
                   <div className="cal-block" key={"e" + j}
-                       style={{ borderLeftColor: TIER_COLOR[tier] }}
+                       style={{ borderLeftColor: courseColor(evCourse) }}
                        title={e.title + "\n" + e.description}>
                     {label} {e.title.replace(/^Work:\s*/, "").replace(/\s*\([^)]*\)\s*$/, "")}
                   </div>
@@ -681,12 +856,9 @@ function Calendar({ data }) {
       </div>
 
       <div className="cal-legend">
-        <span><i style={{ background: TIER_COLOR.critical }} />due &lt;2 days</span>
-        <span><i style={{ background: TIER_COLOR.soon }} />&lt;5 days</span>
-        <span><i style={{ background: TIER_COLOR.upcoming }} />&lt;2 weeks</span>
-        <span><i style={{ background: TIER_COLOR.later }} />later</span>
-        <span><i style={{ background: TIER_COLOR.priority }} />priority course</span>
-        <span><i style={{ background: TIER_COLOR.teaching }} />teaching work</span>
+        {courseNames.map(c => (
+          <span key={c}><i style={{ background: courseColor(c) }} />{shortCourse(c)}</span>
+        ))}
         <span>solid = work block · dashed = deadline</span>
       </div>
     </section>
@@ -694,6 +866,169 @@ function Calendar({ data }) {
 }
 
 // Voice: browser handles speech, the agent handles understanding.
+function Uploader({ courses }) {
+  const [over, setOver] = useState(false);
+  const [msg, setMsg]   = useState(null);      // {text, ok}
+  const [course, setCourse] = useState("");
+  const [url, setUrl]   = useState("");
+  const [busy, setBusy] = useState(false);
+  const inputRef = React.useRef(null);
+
+  const sendFile = (file) => {
+    if (!file) return;
+    setBusy(true);
+    setMsg({ text: "reading " + file.name + "...", ok: true });
+    const reader = new FileReader();
+    reader.onload = () => {
+      fetch("/upload-syllabus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, data: reader.result }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          setBusy(false);
+          if (d.error) setMsg({ text: d.error, ok: false });
+          else setMsg({ text: "saved " + d.file + " — it'll be read on the next refresh", ok: true });
+        })
+        .catch(() => { setBusy(false); setMsg({ text: "upload failed", ok: false }); });
+    };
+    reader.onerror = () => { setBusy(false); setMsg({ text: "couldn't read that file", ok: false }); };
+    reader.readAsDataURL(file);
+  };
+
+  const saveUrl = () => {
+    if (!course || !url.trim()) return;
+    setBusy(true);
+    fetch("/save-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ course, url }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        setBusy(false);
+        if (d.error) setMsg({ text: d.error, ok: false });
+        else { setMsg({ text: "saved the link for " + shortCourse(course), ok: true }); setUrl(""); }
+      })
+      .catch(() => { setBusy(false); setMsg({ text: "couldn't save that", ok: false }); });
+  };
+
+  return (
+    <div>
+      <div
+        className={"dropzone" + (over ? " over" : "")}
+        onClick={() => inputRef.current && inputRef.current.click()}
+        onDragOver={e => { e.preventDefault(); setOver(true); }}
+        onDragLeave={() => setOver(false)}
+        onDrop={e => {
+          e.preventDefault(); setOver(false);
+          sendFile(e.dataTransfer.files && e.dataTransfer.files[0]);
+        }}
+      >
+        <h4>Drop a syllabus here</h4>
+        <p>
+          PDF, txt or md. Name it after the course so I can match it —
+          e.g. <code>Data-89.pdf</code>.<br />
+          Instructors often hand out a PDF and leave Canvas empty; this is how
+          I read those.
+        </p>
+        <input ref={inputRef} type="file" accept=".pdf,.txt,.md,.docx"
+               style={{ display: "none" }}
+               onChange={e => sendFile(e.target.files && e.target.files[0])} />
+      </div>
+
+      <div className="url-row">
+        <select value={course} onChange={e => setCourse(e.target.value)}>
+          <option value="">course website for…</option>
+          {(courses || []).map((c, i) => (
+            <option key={i} value={c.course}>{shortCourse(c.course)}</option>
+          ))}
+        </select>
+        <input placeholder="https://course-site.berkeley.edu" value={url}
+               onChange={e => setUrl(e.target.value)}
+               onKeyDown={e => { if (e.key === "Enter") saveUrl(); }} />
+        <button onClick={saveUrl} disabled={busy || !course || !url.trim()}>save</button>
+      </div>
+
+      {msg && (
+        <div className={"upload-msg " + (msg.ok ? "upload-ok" : "upload-err")}>
+          {msg.text}
+        </div>
+      )}
+
+      <p className="drop-note" style={{ marginTop: 14 }}>
+        Course sites are saved as links, not scraped — every one is structured
+        differently, and guessing at their contents would invent assignments you
+        don't have.
+      </p>
+    </div>
+  );
+}
+
+function Courses({ courses, manual }) {
+  if (!courses || !courses.length) return null;
+  const files = (manual && manual.files) || [];
+  const urls = (manual && manual.course_urls) || {};
+
+  const fileFor = (course) => {
+    const cs = course.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return files.find(f => f.course_hint && (cs.includes(f.course_hint) ||
+                                             cs.startsWith(f.course_hint)));
+  };
+
+  return (
+    <section className="roster">
+      <div className="tier-head">
+        <span className="tier-name" style={{ color: "var(--muted)" }}>Your courses</span>
+        <span className="tier-count">{courses.length}</span>
+      </div>
+
+      {["coursework", "teaching"].map(kind => {
+        const group = courses.filter(c => (c.work_type || "coursework") === kind);
+        if (!group.length) return null;
+        return (
+          <div key={kind} style={{ marginBottom: kind === "coursework" ? 26 : 0 }}>
+            <div className="course-head" style={{ marginBottom: 6 }}>
+              <span className="course-name" style={{ color: "var(--muted)" }}>
+                {kind === "coursework" ? "Taking" : "Teaching / tutoring"}
+              </span>
+              <span className="course-count">{group.length}</span>
+            </div>
+            {group.map((c, i) => {
+        const col = courseColor(c.course);
+        const f = fileFor(c.course);
+        const url = urls[c.course];
+        return (
+          <div className={"roster-row" + (c.has_work ? "" : " roster-quiet")} key={i}>
+            <span className="course-swatch" style={{ background: col }} />
+            <div>
+              <div>{shortCourse(c.course)}</div>
+              <div style={{ marginTop: 3 }}>
+                {c.work_type === "teaching" &&
+                  <span className="tag tag-teach">teaching</span>}
+                {f && <span className="file-chip">{f.file}</span>}
+                {url && <a className="roster-link" href={url} target="_blank"
+                           rel="noreferrer">course site ↗</a>}
+              </div>
+            </div>
+            <span className="roster-state">
+              {c.upcoming > 0
+                ? `${c.upcoming} upcoming`
+                : (c.total_assignments > 0 ? "nothing upcoming" : "nothing posted yet")}
+            </span>
+          </div>
+            );
+            })}
+          </div>
+        );
+      })}
+
+      <Uploader courses={courses} />
+    </section>
+  );
+}
+
 function Voice() {
   const [state, setState] = useState("idle");   // idle | listening | thinking
   const [heard, setHeard]   = useState("");
@@ -961,21 +1296,34 @@ function App() {
             <span className="tier-name" style={{ color: "var(--muted)" }}>Opens later</span>
             <span className="tier-count">{later.length}</span>
           </div>
-          {later.map((t, i) => (
-            <div className="later-row" key={t.title + i}>
-              <div>
-                <div>
-                  {t.title}
-                  {t.work_type === "teaching" &&
-                    <span className="tag tag-teach" style={{ marginLeft: 8 }}>teaching</span>}
+          {Object.entries(
+            later.reduce((acc, t) => {
+              (acc[t.course || "Other"] = acc[t.course || "Other"] || []).push(t);
+              return acc;
+            }, {})
+          ).map(([course, rows]) => {
+            const c = courseColor(course);
+            const teaching = rows.some(r => r.work_type === "teaching");
+            return (
+              <div className="course-group" key={course}>
+                <div className="course-head">
+                  <span className="course-swatch" style={{ background: c }} />
+                  <span className="course-name" style={{ color: c }}>{shortCourse(course)}</span>
+                  {teaching && <span className="tag tag-teach">teaching</span>}
+                  <span className="course-count">{rows.length}</span>
                 </div>
-                <div className="later-course">{t.course}</div>
+                {rows.map((t, i) => (
+                  <div className="later-row" key={t.title + i}
+                       style={{ borderLeft: `2px solid ${c}`, paddingLeft: 12 }}>
+                    <div>{t.title}</div>
+                    <div className="later-when">
+                      {t.opens_in_days === 1 ? "starts tomorrow" : `starts in ${t.opens_in_days} days`}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="later-when">
-                {t.opens_in_days === 1 ? "starts tomorrow" : `starts in ${t.opens_in_days} days`}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
       )}
 
@@ -1053,6 +1401,8 @@ function App() {
         </section>
         );
       })()}
+
+      <Courses courses={data.courses} manual={data.manual} />
 
       <Voice />
 

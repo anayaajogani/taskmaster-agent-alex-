@@ -26,16 +26,24 @@ from datetime import datetime, timezone
 from typing import Iterable
 
 import requests
+from dotenv import load_dotenv
 
 from .models import Task
+
+load_dotenv()  # read .env before the token is captured below
 
 
 CANVAS_BASE_URL = os.environ.get("CANVAS_BASE_URL", "https://bcourses.berkeley.edu")
 CANVAS_TOKEN = os.environ.get("CANVAS_TOKEN", "")
 
 
+def _token() -> str:
+    """Read fresh each call so a rotated token only needs a restart."""
+    return (os.environ.get("CANVAS_TOKEN") or CANVAS_TOKEN or "").strip()
+
+
 def _headers() -> dict:
-    return {"Authorization": f"Bearer {CANVAS_TOKEN}"}
+    return {"Authorization": f"Bearer {_token()}"}
 
 
 def _get(path: str, params: dict | None = None) -> list | dict:
@@ -57,8 +65,286 @@ def _get(path: str, params: dict | None = None) -> list | dict:
 
 
 def fetch_active_courses() -> list[dict]:
-    """Courses the student is currently enrolled in."""
-    return _get("/courses", params={"enrollment_state": "active", "per_page": 100})
+    """Courses the student is currently enrolled in.
+
+    Two Canvas quirks this works around:
+
+    1. `enrollment_state=active` EXCLUDES courses the instructor hasn't
+       published yet. Early in a term that can be half your schedule — the
+       student sees the class on their dashboard, but the API pretends it
+       doesn't exist. We ask for unpublished ones too and filter by state
+       ourselves.
+    2. Some courses don't carry the term in their name, so we request the
+       `term` object rather than string-matching the title.
+    """
+    seen: dict = {}
+
+    # published + active
+    try:
+        for c in _get("/courses", params={
+            "enrollment_state": "active",
+            "include[]": "term",
+            "per_page": 100,
+        }) or []:
+            seen[c.get("id")] = c
+    except Exception:
+        pass
+
+    # unpublished courses you're still enrolled in (invited/pending too)
+    for state in ("invited_or_pending", "completed"):
+        try:
+            for c in _get("/courses", params={
+                "enrollment_state": state,
+                "include[]": "term",
+                "per_page": 100,
+            }) or []:
+                seen.setdefault(c.get("id"), c)
+        except Exception:
+            pass
+
+    # and the unfiltered list, which is what actually surfaces "unpublished"
+    try:
+        for c in _get("/courses", params={
+            "include[]": "term",
+            "per_page": 100,
+        }) or []:
+            state = (c.get("workflow_state") or "").lower()
+            if state in ("available", "unpublished", "claimed"):
+                seen.setdefault(c.get("id"), c)
+    except Exception:
+        pass
+
+    return list(seen.values())
+
+
+def course_term(course: dict) -> str:
+    """The course's term name, e.g. 'Fall 2026'. Empty if Canvas didn't say."""
+    return ((course.get("term") or {}).get("name") or "").strip()
+
+
+def current_term_name() -> str:
+    """Work out which term is running right now, from Canvas itself.
+
+    Hardcoding "Fall 2026" would work for one student in one semester and
+    silently break for everyone else. Instead: ask Canvas for the terms of the
+    courses you're enrolled in, and pick the one whose date range covers today.
+    Falls back to the most common term across active courses, then to "".
+    """
+    try:
+        courses = fetch_active_courses()
+    except Exception:
+        return ""
+
+    now = datetime.now(timezone.utc)
+    counts: dict[str, int] = {}
+
+    for c in courses:
+        term = c.get("term") or {}
+        name = (term.get("name") or "").strip()
+        if not name or name.lower() in _USELESS_TERMS:
+            continue
+        counts[name] = counts.get(name, 0) + 1
+
+        # if Canvas gives dates, trust them over any heuristic
+        start, end = term.get("start_at"), term.get("end_at")
+        try:
+            if start and end:
+                s_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+                e_dt = datetime.fromisoformat(end.replace("Z", "+00:00"))
+                if s_dt <= now <= e_dt:
+                    return name
+        except Exception:
+            pass
+
+    if not counts:
+        return ""
+
+    # No dated term covered today — fall back to whichever term most of your
+    # active courses belong to, which is almost always the current one.
+    return max(counts.items(), key=lambda kv: kv[1])[0]
+
+
+# Canvas at many schools reports "Default Term" for everything, so term-based
+# filtering is unreliable. Rather than guess, we identify a real academic course
+# by the things that actually distinguish one: a course code, an enrollment in
+# a graded section, and NOT being a compliance/training module.
+
+# Non-academic courses Canvas serves alongside real ones. These are mandatory
+# trainings, orientations and admin shells — they have no grades and no
+# deadlines that belong on a study schedule.
+_NON_ACADEMIC_PATTERNS = (
+    "student training", "shape ", "orientation", "golden bear",
+    "enrollment course", "advising", "guide for", "onboarding",
+    "compliance", "training -", "prep ",
+)
+
+
+def taking_list() -> list[str]:
+    """Courses the student explicitly said they're taking, from onboarding."""
+    try:
+        from .onboarding import load_config
+        return [t.strip().lower() for t in (load_config().get("taking_courses") or [])
+                if t.strip()]
+    except Exception:
+        return []
+
+
+def is_taking(course: dict) -> bool:
+    """True if this is one of the courses the student named as theirs.
+
+    Explicit beats inferred: after several rounds of trying to guess which of
+    55 Canvas courses are the student's current classes, asking once is more
+    reliable than any heuristic.
+    """
+    taking = taking_list()
+    if not taking:
+        return True  # nothing configured yet — don't hide anything
+    name = (course.get("name") or "").lower()
+    return any(t in name or name.startswith(t[:20]) for t in taking)
+
+
+def is_academic_course(course: dict) -> bool:
+    """True if this looks like a class the student takes or teaches.
+
+    Deliberately conservative: a mandatory harassment-training module has
+    dozens of 'pages' that would swamp a study plan, and it isn't coursework.
+    """
+    name = (course.get("name") or "").lower()
+    if not name:
+        return False
+    return not any(p in name for p in _NON_ACADEMIC_PATTERNS)
+
+
+_USELESS_TERMS = {"default term", "term", ""}
+
+
+def in_term(course: dict, term: str) -> bool:
+    """True if the course belongs to `term`.
+
+    Degrades safely: when Canvas gives no usable term (the common case), keep
+    the course. Hiding a class the student is enrolled in is a far worse
+    failure than showing one extra.
+    """
+    _useless = {"default term", "term", ""}
+    if not term or term.strip().lower() in _useless:
+        return True
+
+    t = course_term(course)
+    if t and t.strip().lower() not in _useless:
+        return term.lower() in t.lower()
+
+    name = (course.get("name") or "").lower()
+    if any(season in name for season in ("fall", "spring", "summer", "winter")):
+        return term.lower() in name
+    return True
+
+
+def course_roster(current_term: str | None = None) -> list[dict]:
+    """Every current course, INCLUDING ones with nothing posted yet.
+
+    The task list only shows courses that have work. That's correct, but it
+    leaves you wondering whether a quiet course was missed or genuinely has
+    nothing. This returns the full roster with a count, so the UI can show
+    "American Poetry — no assignments posted yet" instead of silence.
+    """
+    from datetime import datetime, timezone
+
+    if current_term is None:
+        current_term = current_term_name()
+
+    try:
+        from .onboarding import load_config
+        cfg = load_config()
+    except Exception:
+        cfg = {}
+    tutoring = [t.lower().strip() for t in (cfg.get("tutoring_courses") or []) if t.strip()]
+    excluded = [e.lower().strip() for e in (cfg.get("excluded_courses") or []) if e.strip()]
+
+    now = datetime.now(timezone.utc)
+    out = []
+
+    _taking = taking_list()
+
+    for course in fetch_active_courses():
+        name = course.get("name") or ""
+        if not is_academic_course(course):
+            continue
+
+        if _taking:
+            # Student named their classes. Show those, plus current-term
+            # courses where Canvas says they teach — that's the whole picture.
+            _tut = []
+            try:
+                from .onboarding import load_config
+                _tut = [t.lower().strip()
+                        for t in (load_config().get("tutoring_courses") or [])
+                        if t.strip()]
+            except Exception:
+                pass
+            _n = (course.get("name") or "").lower()
+            # Onboarding picks are the only source of truth. Canvas roles
+            # drag in stale courses from past terms where the student still
+            # holds a teacher enrolment, so we do not consult them here.
+            if not (is_taking(course) or any(t in _n for t in _tut)):
+                continue
+        elif not in_term(course, current_term):
+            continue
+        if any(e in name.lower() for e in excluded):
+            continue
+
+        if taking_list():
+            teaches = not is_taking(course)
+        else:
+            teaches = is_teaching_role(course) or any(
+                t in name.lower() for t in tutoring
+            )
+
+        try:
+            assigns = fetch_assignments(course["id"]) or []
+        except Exception:
+            assigns = []
+
+        upcoming = 0
+        for a in assigns:
+            raw = a.get("due_at")
+            if not raw:
+                continue
+            try:
+                if _parse_due(raw) > now:
+                    upcoming += 1
+            except Exception:
+                pass
+
+        out.append({
+            "course": name,
+            "work_type": "teaching" if teaches else "coursework",
+            "total_assignments": len(assigns),
+            "upcoming": upcoming,
+            "has_work": upcoming > 0,
+        })
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Role detection
+# ---------------------------------------------------------------------------
+
+TEACHING_ROLES = {"ta", "teacher", "designer", "TaEnrollment", "TeacherEnrollment"}
+
+
+def course_role(course: dict) -> str:
+    """The user's role in a course: 'student', 'ta', 'teacher', etc."""
+    roles = [e.get("type", "") for e in (course.get("enrollments") or [])]
+    for r in roles:
+        if r in TEACHING_ROLES or r.lower().replace("enrollment", "") in TEACHING_ROLES:
+            return r.lower().replace("enrollment", "") or r
+    return roles[0].lower().replace("enrollment", "") if roles else "unknown"
+
+
+def is_teaching_role(course: dict) -> bool:
+    """True if the user teaches/TAs this course rather than taking it."""
+    return course_role(course) in TEACHING_ROLES
 
 
 def fetch_assignments(course_id: int) -> list[dict]:
@@ -66,11 +352,12 @@ def fetch_assignments(course_id: int) -> list[dict]:
     return _get(f"/courses/{course_id}/assignments", params={"per_page": 100})
 
 
-def _parse_due(raw: str | None) -> datetime | None:
+def _parse_due(raw: str | None):
+    """Canvas returns UTC. Convert to local so a 7pm Pacific deadline reads
+    as that evening rather than 2am the next day."""
     if not raw:
         return None
-    # Canvas returns ISO 8601 with a trailing Z
-    return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    return datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone()
 
 
 def assignments_to_tasks(skip_teaching: bool = False) -> list[Task]:
@@ -78,33 +365,55 @@ def assignments_to_tasks(skip_teaching: bool = False) -> list[Task]:
 
     Skips assignments with no due date and ones already past due.
 
-    Courses where Canvas says you're a TA/teacher are KEPT but tagged
-    work_type="teaching" — grading and prep are real work, they're just a
-    different kind than your own coursework. Pass skip_teaching=True to drop
-    them entirely instead.
-
-    Note the manual exclusion list in the config still removes courses
-    outright; that's for cases Canvas gets wrong (e.g. tutors enrolled as
-    students).
+    Courses where Canvas says you're a TA/teacher — or that you named as
+    tutoring in onboarding — are KEPT but tagged work_type="teaching".
+    Grading and prep are real work, just a different kind than your own
+    coursework. Non-academic shells (mandatory trainings, orientations) are
+    dropped entirely.
     """
     tasks: list[Task] = []
     teaching_courses: list[str] = []
     now = datetime.now(timezone.utc)
 
+    try:
+        from .onboarding import load_config
+        _tutoring = [t.lower().strip()
+                     for t in (load_config().get("tutoring_courses") or [])
+                     if t.strip()]
+    except Exception:
+        _tutoring = []
+
     for course in fetch_active_courses():
         course_id = course.get("id")
         course_name = course.get("name") or course.get("course_code") or str(course_id)
 
-        teaches = is_teaching_role(course)
+        if not is_academic_course(course):
+            continue  # training / orientation shells aren't coursework
+
+        # The student named their own classes; everything else current is
+        # teaching/tutoring work.
+        _taking = taking_list()
+        if _taking:
+            teaches = not is_taking(course)
+        else:
+            teaches = is_teaching_role(course) or any(
+                t in course_name.lower() for t in _tutoring
+            )
         if teaches:
-            teaching_courses.append(f"{course_name} (you are {course_role(course)})")
+            why = course_role(course) if is_teaching_role(course) else "you tutor it"
+            teaching_courses.append(f"{course_name} ({why})")
             if skip_teaching:
                 continue
 
-        for a in fetch_assignments(course_id):
+        try:
+            assigns = fetch_assignments(course_id)
+        except Exception:
+            continue
+
+        for a in assigns or []:
             due = _parse_due(a.get("due_at"))
             if due is None or due < now:
-                continue  # no deadline or already passed -> skip
+                continue
 
             tasks.append(
                 Task(
@@ -125,66 +434,3 @@ def assignments_to_tasks(skip_teaching: bool = False) -> list[Task]:
     )
     assignments_to_tasks.last_teaching_courses = teaching_courses  # type: ignore
     return tasks
-
-
-def _publish(tasks: Iterable[Task]) -> None:
-    """Publish each task to Pub/Sub, or print if no topic is configured (dev)."""
-    topic = os.environ.get("PUBSUB_TOPIC")
-    if not topic:
-        for t in tasks:
-            print(json.dumps(json.loads(t.model_dump_json()), indent=2, default=str))
-        return
-
-    # Lazy import so local dev doesn't need the Pub/Sub client installed.
-    from google.cloud import pubsub_v1  # type: ignore
-
-    publisher = pubsub_v1.PublisherClient()
-    for t in tasks:
-        payload = t.model_dump_json().encode("utf-8")
-        # Match the sample's message shape: base64 data + attributes.
-        publisher.publish(topic, data=payload, source="canvas")
-
-
-def run_once() -> int:
-    """One poll cycle. Returns count of tasks published."""
-    if not CANVAS_TOKEN:
-        raise SystemExit(
-            "Set CANVAS_TOKEN (bCourses > Account > Settings > New Access Token)."
-        )
-    tasks = assignments_to_tasks()
-    _publish(tasks)
-    return len(tasks)
-
-
-if __name__ == "__main__":
-    count = run_once()
-    print(f"\nProcessed {count} upcoming assignment(s).")
-
-
-# ---------------------------------------------------------------------------
-# Role detection
-# ---------------------------------------------------------------------------
-
-# Canvas enrollment types that mean "you teach/support this course" rather
-# than "you take it". Assignments in these courses are other people's work.
-TEACHING_ROLES = {"ta", "teacher", "designer", "TaEnrollment", "TeacherEnrollment"}
-
-
-def course_role(course: dict) -> str:
-    """Return the user's role in a course: 'student', 'ta', 'teacher', etc.
-
-    Canvas reports this in the course's `enrollments` list. Note this is only
-    as accurate as the enrollment itself — at some schools tutors and readers
-    are enrolled as plain students, so this can't catch every case. The
-    manual exclusion list in the config covers those.
-    """
-    roles = [e.get("type", "") for e in (course.get("enrollments") or [])]
-    for r in roles:
-        if r in TEACHING_ROLES or r.lower().replace("enrollment", "") in TEACHING_ROLES:
-            return r.lower().replace("enrollment", "") or r
-    return roles[0].lower().replace("enrollment", "") if roles else "unknown"
-
-
-def is_teaching_role(course: dict) -> bool:
-    """True if the user teaches/TAs this course rather than taking it."""
-    return course_role(course) in TEACHING_ROLES

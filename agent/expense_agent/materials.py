@@ -20,10 +20,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .canvas_poller import fetch_active_courses, _get, is_teaching_role
+from .canvas_poller import (
+    fetch_active_courses, _get, is_teaching_role, in_term, current_term_name,
+    is_academic_course,
+)
 from .onboarding import load_config
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 MATERIALS_JSON = _AGENT_ROOT / "materials.json"
 
 # Item types worth surfacing as "things to do or read".
@@ -61,15 +67,20 @@ def _is_done(item: dict) -> bool:
     return bool(req.get("completed"))
 
 
-def fetch_materials(current_term: str = "Fall 2026") -> list[dict]:
+def fetch_materials(current_term: str | None = None) -> list[dict]:
     """Return unlocked, incomplete module items from courses you're taking."""
+    if current_term is None:
+        current_term = current_term_name()
+
     cfg = load_config()
     out = []
 
     for course in fetch_active_courses():
         name = course.get("name") or ""
-        if current_term and current_term not in name:
+        if not in_term(course, current_term):
             continue
+        if not is_academic_course(course):
+            continue  # don't flood the study plan with training modules
         if is_teaching_role(course):
             continue
         if _course_excluded(name, cfg):

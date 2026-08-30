@@ -13,7 +13,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 CONFIG_PATH = _AGENT_ROOT / "taskmaster_config.json"
 
 
@@ -87,22 +90,100 @@ def run_onboarding() -> dict:
     off_days = [d.strip().title()[:3] for d in off_days_raw.split(",") if d.strip()]
 
     # Q5 - course priorities + exclusions
+    # Q5 - courses, picked from Canvas rather than guessed
     print("\n5) Now your courses.")
-    priority_courses_raw = _ask_text(
-        "5a) Which courses matter most this term? (comma separated, partial names OK)", ""
+    print("   Pulling your Canvas enrolments...")
+
+    enrolled: list[str] = []
+    try:
+        from .canvas_poller import fetch_active_courses, is_teaching_role, course_role
+        raw = fetch_active_courses()
+        # Show the most plausible current-term courses first, but list them all
+        # rather than guessing — the student knows which are theirs.
+        def _score(c):
+            t = ((c.get("term") or {}).get("name") or "").lower()
+            return (0 if any(y in t for y in ("2026", "2027")) else 1,
+                    (c.get("name") or "").lower())
+        raw.sort(key=_score)
+        enrolled = [(c.get("name") or "").strip() for c in raw if c.get("name")]
+        roles = {(c.get("name") or "").strip():
+                 (course_role(c) if is_teaching_role(c) else "student")
+                 for c in raw}
+    except Exception as e:
+        print(f"   (couldn't reach Canvas: {str(e)[:50]})")
+        roles = {}
+
+    taking_courses: list[str] = []
+    if enrolled:
+        print("\n   Your Canvas courses:")
+        for i, name in enumerate(enrolled[:30], 1):
+            hint = ""
+            if roles.get(name) not in ("student", None):
+                hint = f"   [Canvas says you're {roles.get(name)}]"
+            print(f"     {i:>2}) {name[:58]}{hint}")
+        if len(enrolled) > 30:
+            print(f"     ... and {len(enrolled) - 30} older ones not shown")
+
+        picked = _ask_text(
+            "\n5a) Which of these are you TAKING this term?\n"
+            "     Enter the numbers, comma separated (e.g. 2,4,7)",
+            "",
+        )
+        for part in picked.split(","):
+            part = part.strip()
+            if part.isdigit() and 1 <= int(part) <= len(enrolled):
+                taking_courses.append(enrolled[int(part) - 1])
+    else:
+        typed = _ask_text(
+            "5a) Which courses are you TAKING this term? (comma separated)", ""
+        )
+        taking_courses = [c.strip() for c in typed.split(",") if c.strip()]
+
+    if taking_courses:
+        print("\n   Taking:")
+        for c in taking_courses:
+            print(f"     - {c[:58]}")
+        print("\n   Anything else this term I'll treat as teaching/tutoring work.")
+
+    # Which of the rest do you teach? Canvas often enrols tutors as students,
+    # so it can't be inferred — but it's a short list once taken courses go.
+    tutoring_courses = []
+    if enrolled:
+        rest = [n for n in enrolled[:30] if n not in taking_courses]
+        if rest:
+            print("\n   The rest of your recent courses:")
+            for i, name in enumerate(rest, 1):
+                hint = ""
+                if roles.get(name) not in ("student", None):
+                    hint = "   [Canvas: " + str(roles.get(name)) + "]"
+                print("     " + str(i).rjust(2) + ") " + name[:58] + hint)
+            picked_t = _ask_text(
+                "\n5b) Which of THOSE do you TA or tutor this term?\n"
+                "     Numbers, comma separated (blank if none)",
+                "",
+            )
+            for part in picked_t.split(","):
+                part = part.strip()
+                if part.isdigit() and 1 <= int(part) <= len(rest):
+                    tutoring_courses.append(rest[int(part) - 1])
+            if tutoring_courses:
+                print("\n   Teaching / tutoring:")
+                for c in tutoring_courses:
+                    print("     - " + c[:58])
+
+    priority_raw = _ask_text(
+        "5b) Which of those matter most? (comma separated names, or blank)", ""
     )
-    priority_courses = [c.strip() for c in priority_courses_raw.split(",") if c.strip()]
+    priority_courses = [c.strip() for c in priority_raw.split(",") if c.strip()]
 
     excluded_raw = _ask_text(
-        "5b) Any courses I should IGNORE? (e.g. classes you tutor or TA, "
-        "not classes you take — comma separated)",
-        "",
+        "5c) Any courses to IGNORE completely? (blank if none)", ""
     )
     excluded_courses = [c.strip() for c in excluded_raw.split(",") if c.strip()]
 
     # Non-Canvas courses
     non_canvas = _ask_text(
-        "5c) Any courses that DON'T use Canvas? Give name + URL if so "
+        "5d) Any courses that DON'T use Canvas? Give name + URL if so "
         "(I'll flag these for you to check manually)",
         "",
     )
@@ -129,6 +210,8 @@ def run_onboarding() -> dict:
         "work_day_end": int(quiet_start or 21),
         "off_days": off_days,
         "priority_courses": priority_courses,
+        "taking_courses": taking_courses,
+        "tutoring_courses": tutoring_courses,
         "excluded_courses": excluded_courses,
         "non_canvas_courses": non_canvas,
         "daily_cap_hours": daily_cap_hours,
@@ -150,6 +233,9 @@ def run_onboarding() -> dict:
     print(f"  Max per day:       {daily_cap_hours}h")
     if priority_courses:
         print(f"  Priority courses:  {', '.join(priority_courses)}")
+    if taking_courses:
+        print(f"  Taking:            {', '.join(c[:26] for c in taking_courses)}")
+        print("  Everything else this term -> teaching/tutoring")
     if excluded_courses:
         print(f"  Ignoring:          {', '.join(excluded_courses)}")
     if non_canvas:
@@ -175,6 +261,8 @@ def load_config() -> dict:
         "work_day_end": 21,
         "off_days": [],
         "priority_courses": [],
+        "taking_courses": [],
+        "tutoring_courses": [],
         "excluded_courses": [],
         "non_canvas_courses": "",
         "daily_cap_hours": 4,

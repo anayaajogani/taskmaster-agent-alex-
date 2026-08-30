@@ -1,4 +1,18 @@
+"""Feed real Canvas assignments into the running taskmaster agent.
 
+This is the end-to-end connector. It:
+  1. pulls your real bCourses assignments (via the canvas_poller),
+  2. sends each one to the live agent's trigger endpoint — the same
+     endpoint the test curl hit — so the agent parses, estimates effort,
+     scores, and fires reminders on YOUR real tasks.
+
+Run it while `make dev` is running in another terminal:
+    uv run python -m expense_agent.feed_canvas
+
+Env vars (same .env you already have):
+    CANVAS_BASE_URL, CANVAS_TOKEN   -> read your assignments
+    AGENT_URL                       -> defaults to local dev server
+"""
 
 from __future__ import annotations
 

@@ -1,0 +1,9 @@
+taking_courses in config: ['American Poetry (Fall 2026)', 'Data 89', 'Stat 131a', 'Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)']
+tutoring_courses in config: ['Special Topics in American Cultures (Fall 2026)', 'Technology Entrepreneurship (Fall 2026)']
+taking_list() returns: ['american poetry (fall 2026)', 'data 89', 'stat 131a', 'human contexts and ethics of data - data/history/sts (fall 2026)']
+
+American Poetry (Fall 2026) | academic=True | is_taking=True | teaches=False
+Data 89 | academic=True | is_taking=True | teaches=False
+Special Topics in American Cultures (Fall 20 | academic=True | is_taking=False | teaches=False
+Special Topics in American Cultures (Spring  | academic=True | is_taking=False | teaches=False
+Stat 131a | academic=True | is_taking=True | teaches=False

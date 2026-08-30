@@ -24,7 +24,10 @@ from pathlib import Path
 
 import requests
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 DAILY_JSON = _AGENT_ROOT / "daily_view.json"
 CONFIG_JSON = _AGENT_ROOT / "taskmaster_config.json"
 

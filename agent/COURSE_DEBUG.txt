@@ -1,0 +1,568 @@
+[
+  {
+    "name": "AI & Human Intelligence (Summer 2026)",
+    "id": 1555630,
+    "term": "Summer 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "American Poetry (Fall 2026)",
+    "id": 1558201,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Asian American Literatures and Cultures: Voice, Text, Image (Spring 2026)",
+    "id": 1552120,
+    "term": "Spring 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Climate Change Economics (Summer 2025)",
+    "id": 1545881,
+    "term": "Summer 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Computational Structures in Data Science (Summer 2025)",
+    "id": 1545181,
+    "term": "Summer 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Data 89",
+    "id": 1558705,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Directed Group Study for Freshmen and Sophomores (Fall 2025)",
+    "id": 1549029,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "teacher"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Directed Group Study for Freshmen and Sophomores (Spring 2026)",
+    "id": 1553555,
+    "term": "Spring 2026",
+    "state": "available",
+    "roles": [
+      "teacher"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Earthquakes in Your Backyard (Fall 2023)",
+    "id": 1525347,
+    "term": "Fall 2023",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Econometrics (Fall 2025)",
+    "id": 1546801,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Economic Analysis for Planning (Fall 2025)",
+    "id": 1547729,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "English 45A (Fall 2023)",
+    "id": 1526916,
+    "term": "Fall 2023",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "English 45A Discussion",
+    "id": 1529504,
+    "term": "Fall 2023",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Exploring Ecotopia - Directed Group Study (Spring 2026)",
+    "id": 1553952,
+    "term": "Spring 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Field Studies (Summer 2026)",
+    "id": 1555181,
+    "term": "Summer 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Financial Economics (Fall 2025)",
+    "id": 1546972,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "FPF Golden Bear Advising FL23",
+    "id": 1521318,
+    "term": "Default Term",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "GBA-FL23-ENROLLMENT COURSE",
+    "id": 1520498,
+    "term": "Default Term",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "General Psychology (Fall 2023)",
+    "id": 1526845,
+    "term": "Fall 2023",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Global Poverty and Impact Evaluation (Spring 2025)",
+    "id": 1541452,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Global Poverty: Challenges and Hopes (Summer 2025)",
+    "id": 1544963,
+    "term": "Summer 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Golden Bear Orientation FL23",
+    "id": 1525810,
+    "term": "Default Term",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "Golden Bear Prep International FL23",
+    "id": 1521218,
+    "term": "Default Term",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "Health Economics (Summer 2026)",
+    "id": 1554817,
+    "term": "Summer 2026",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Human Contexts and Ethics of Data - DATA/History/STS (Fall 2026)",
+    "id": 1557692,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Individual Morality and Social Justice (Fall 2023)",
+    "id": 1527614,
+    "term": "Fall 2023",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "International Environmental Economics (Spring 2025)",
+    "id": 1541513,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Intro to 5D Chess (Fall 2024)",
+    "id": 1539496,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Introduction to Oceans (Summer 2024D)",
+    "id": 1535635,
+    "term": "Summer 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Introduction to Probability and Statistics (Spring 2024)",
+    "id": 1531766,
+    "term": "Spring 2024",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Introduction to the History of the United States: The United States from Settlement to Civil War (Summer 2024)",
+    "id": 1535046,
+    "term": "Summer 2024",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Literature in English: The Late-17th through the Mid-19th Century (Fall 2024)",
+    "id": 1536535,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Literature in English: The Late-17th through the Mid-19th Century (Fall 2024)",
+    "id": 1539532,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Literature in English: The Mid-19th through the Mid-20th Century (Spring 2025)",
+    "id": 1543611,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Literature in English: The Mid-19th through the Mid-20th Century (Spring 2025)",
+    "id": 1541918,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Macroeconomics (Spring 2024)",
+    "id": 1530088,
+    "term": "Spring 2024",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Microeconomics (Spring 2025)",
+    "id": 1540331,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Practices of Literary Study (Spring 2025)",
+    "id": 1543624,
+    "term": "Spring 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Psychology and Economics (Fall 2024)",
+    "id": 1538701,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Shakespeare (Fall 2024)",
+    "id": 1537333,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "SHAPE Student Training - UCB - 2026-2027",
+    "id": 30000002702308,
+    "term": " SHAPE 2026-2027",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "Special Topics in American Cultures (Fall 2026)",
+    "id": 1557781,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Special Topics in American Cultures (Spring 2026)",
+    "id": 1551143,
+    "term": "Spring 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Stat 131a",
+    "id": 1558712,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Technology Entrepreneurship (Fall 2026)",
+    "id": 1557206,
+    "term": "Fall 2026",
+    "state": "available",
+    "roles": [
+      "ta"
+    ],
+    "kept": true
+  },
+  {
+    "name": "The Seminar on Criticism (Fall 2025)",
+    "id": 1548447,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Topics in Economic Research (Fall 2024)",
+    "id": 1538846,
+    "term": "Fall 2024",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "UGBA 10-LEC-001 - Principles of Business (Spring 2024)",
+    "id": 1530306,
+    "term": "Spring 2024",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Writing at the University: A Writing Seminar for Transfer Students (Summer 2026)",
+    "id": 1553909,
+    "term": "Summer 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Writing Fellows - Guide for Embedded Tutors",
+    "id": 1554089,
+    "term": "Projects",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": false
+  },
+  {
+    "name": "Writing Short Fiction, Fall 2025",
+    "id": 1548557,
+    "term": "Fall 2025",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Concepts in Computing with Data (Spring 2026)",
+    "id": 1551809,
+    "term": "Spring 2026",
+    "state": "available",
+    "roles": [
+      "student",
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Digital Infrastructure 101: The Hidden Foundations of the Internet (Summer 2026, Session D)",
+    "id": 1555583,
+    "term": "Summer 2026",
+    "state": "available",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Literature in English: The Mid-19th through the Mid-20th Century (Spring 2025)",
+    "id": 1543610,
+    "term": "Spring 2025",
+    "state": "unpublished",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  },
+  {
+    "name": "Research Seminar (Spring 2026)",
+    "id": 1551513,
+    "term": "Spring 2026",
+    "state": "unpublished",
+    "roles": [
+      "student"
+    ],
+    "kept": true
+  }
+]

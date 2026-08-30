@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+gcal_token.json
+gcal_credentials.json
+*.json
+!package.json
+syllabi/
+.git/

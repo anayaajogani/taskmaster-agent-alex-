@@ -25,7 +25,10 @@ import datetime as dt
 import json
 from pathlib import Path
 
-_AGENT_ROOT = Path(__file__).resolve().parent.parent
+import os as _os
+_AGENT_ROOT = Path(_os.environ.get('STATE_DIR')) \
+    if _os.environ.get('STATE_DIR') \
+    else Path(__file__).resolve().parent.parent
 DAILY_JSON = _AGENT_ROOT / "daily_view.json"
 
 # ANSI colors for the terminal view
@@ -74,6 +77,34 @@ def _tier(score: float, scores: list[float]) -> str:
     if pct >= 0.33:
         return TIER_MEDIUM
     return TIER_LOW
+
+
+def _spread_by_course(rows, per_course=3, total=15):
+    """Cap the upcoming list without letting one busy course hide the others.
+
+    A flat "nearest deadline first" cut meant two courses with weekly homework
+    consumed every slot, so a midterm three weeks out simply vanished. Take a
+    few from each course first, then fill any remaining space by urgency.
+    """
+    by_course = {}
+    for r in rows:
+        by_course.setdefault(r.get("course") or "?", []).append(r)
+
+    picked, seen = [], set()
+    for course_rows in by_course.values():
+        for r in course_rows[:per_course]:
+            picked.append(r)
+            seen.add(id(r))
+
+    for r in rows:                      # already ordered by start date
+        if len(picked) >= total:
+            break
+        if id(r) not in seen:
+            picked.append(r)
+            seen.add(id(r))
+
+    picked.sort(key=lambda r: r.get("opens_in_days", 999))
+    return picked[:total]
 
 
 def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=None) -> dict:
@@ -129,7 +160,7 @@ def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=
         "date": today.isoformat(),
         "daily_cap_hours": cfg.get("daily_cap_hours", 4),
         "active": active,
-        "upcoming": upcoming[:8],
+        "upcoming": _spread_by_course(upcoming, per_course=3, total=15),
         "materials": materials or [],
     }
 
@@ -147,6 +178,21 @@ def build_daily_view(briefing: list[dict], cfg: dict, tasks_raw=None, materials=
         view["calendar"] = build_calendar_view()
     except Exception:
         view["calendar"] = None
+
+    # Every current course, including quiet ones — so a course with nothing
+    # posted reads as "nothing posted yet" rather than looking forgotten.
+    try:
+        from .canvas_poller import course_roster
+        view["courses"] = course_roster()
+    except Exception:
+        view["courses"] = []
+
+    # Syllabi the student dropped in, and course website URLs.
+    try:
+        from .manual_sources import build_manual_index
+        view["manual"] = build_manual_index()
+    except Exception:
+        view["manual"] = None
 
     DAILY_JSON.write_text(json.dumps(view, indent=2, default=str))
     return view

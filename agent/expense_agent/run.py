@@ -41,6 +41,9 @@ def _stamp() -> str:
     return dt.datetime.now().strftime("%H:%M:%S")
 
 
+_last_task_count = {"n": None}
+
+
 def refresh_data(verbose: bool = True) -> dict | None:
     """One data refresh: tasks, materials, scoring, JSON outputs."""
     from .canvas_poller import assignments_to_tasks
@@ -57,6 +60,12 @@ def refresh_data(verbose: bool = True) -> dict | None:
             return []
 
     try:
+        from .course_site import site_tasks
+    except Exception:
+        def site_tasks():
+            return []
+
+    try:
         from .materials import fetch_materials
     except Exception:
         def fetch_materials():
@@ -66,7 +75,8 @@ def refresh_data(verbose: bool = True) -> dict | None:
 
     canvas = assignments_to_tasks()
     seen = {_dedupe_key(t) for t in canvas}
-    extra = [t for t in syllabus_tasks() if _dedupe_key(t) not in seen]
+    extra = [t for t in (list(syllabus_tasks()) + list(site_tasks()))
+             if _dedupe_key(t) not in seen]
     tasks = [t for t in (canvas + extra) if not _is_excluded(t, cfg)]
 
     briefing = []
@@ -117,8 +127,63 @@ def _serve(port: int) -> None:
         def log_message(self, *args):
             pass  # don't spam the console with every poll
 
+        def _send_json(self, obj, code=200):
+            payload = _json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
         def do_POST(self):
-            if self.path.rstrip("/") != "/ask":
+            route = self.path.rstrip("/")
+
+            # --- syllabus upload: raw file bytes, filename in a header ---
+            if route == "/upload-syllabus":
+                try:
+                    import base64 as _b64
+                    from .manual_sources import SYLLABI_DIR
+                    length = int(self.headers.get("Content-Length", 0))
+                    body = _json.loads(self.rfile.read(length) or b"{}")
+                    name = (body.get("filename") or "").strip()
+                    data_b64 = body.get("data") or ""
+                    # keep the filename simple; it's used to match a course
+                    name = "".join(c for c in name
+                                   if c.isalnum() or c in " .-_()").strip()
+                    if not name or not data_b64:
+                        return self._send_json({"error": "missing file"}, 400)
+                    SYLLABI_DIR.mkdir(exist_ok=True)
+                    raw = _b64.b64decode(data_b64.split(",")[-1])
+                    if len(raw) > 12 * 1024 * 1024:
+                        return self._send_json({"error": "file too large (12MB max)"}, 400)
+                    (SYLLABI_DIR / name).write_bytes(raw)
+                    print(f"  [{_stamp()}] syllabus uploaded: {name} "
+                          f"({round(len(raw)/1024)} KB)")
+                    refresh_data(verbose=False)
+                    return self._send_json({"ok": True, "file": name})
+                except Exception as e:
+                    return self._send_json({"error": str(e)[:120]}, 500)
+
+            # --- save a course website URL ---
+            if route == "/save-url":
+                try:
+                    from .manual_sources import save_course_url
+                    length = int(self.headers.get("Content-Length", 0))
+                    body = _json.loads(self.rfile.read(length) or b"{}")
+                    course = (body.get("course") or "").strip()
+                    url = (body.get("url") or "").strip()
+                    if not course or not url:
+                        return self._send_json({"error": "need course and url"}, 400)
+                    if not url.startswith(("http://", "https://")):
+                        url = "https://" + url
+                    save_course_url(course, url)
+                    print(f"  [{_stamp()}] course URL saved: {course[:30]}")
+                    refresh_data(verbose=False)
+                    return self._send_json({"ok": True})
+                except Exception as e:
+                    return self._send_json({"error": str(e)[:120]}, 500)
+
+            if route != "/ask":
                 self.send_error(404)
                 return
             try:
@@ -141,9 +206,18 @@ def _serve(port: int) -> None:
             self.end_headers()
             self.wfile.write(payload)
 
-    handler = functools.partial(Handler, directory=str(_AGENT_ROOT))
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", port), handler) as httpd:
+    import os as _os
+    _STATIC_ROOT = _os.environ.get('STATIC_DIR') or str(_AGENT_ROOT)
+    handler = functools.partial(Handler, directory=_STATIC_ROOT)
+
+    class Server(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+        def handle_error(self, request, client_address):
+            pass  # browser closed early; not worth a traceback
+
+    with Server(("", port), handler) as httpd:
         httpd.serve_forever()
 
 

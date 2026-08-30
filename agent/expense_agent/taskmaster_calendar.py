@@ -36,6 +36,12 @@ from .onboarding import load_config
 from .task_list import write_task_list
 
 try:
+    from .course_site import site_tasks
+except Exception:
+    def site_tasks() -> list:
+        return []
+
+try:
     from .syllabus import difficulty_multipliers, syllabus_tasks, recurring_work
 except Exception:  # syllabus analysis is optional
     def difficulty_multipliers() -> dict:
@@ -66,28 +72,57 @@ COLOR_UPCOMING = "5"    # yellow - due within 2 weeks
 COLOR_LATER = "10"      # green  - further out
 COLOR_PRIORITY = "3"    # purple - a course the student flagged as priority
 
+# Distinct Google Calendar colours, one per course. Google only offers 11, so
+# with more courses than this two will eventually share a colour — acceptable,
+# and the event title still names the course.
+COURSE_COLOR_IDS = [
+    "9",   # blueberry
+    "4",   # flamingo
+    "10",  # basil
+    "5",   # banana
+    "3",   # grape
+    "7",   # peacock
+    "6",   # tangerine
+    "2",   # sage
+]
+
 
 COLOR_TEACHING = "9"    # blueberry - work you owe students, not graded work
 
 
-def _pick_color(task, cfg, due_local: dt.datetime) -> str:
-    """Color-code blocks so the calendar is readable at a glance.
+def _block_title(task) -> str:
+    """Name a block for what you'll actually be doing in it.
 
-    Priority courses get their own color; everything else is colored by how
-    soon it's due, so red always means 'this is the fire'.
+    "Midterm 1" on a Wednesday is confusing - the exam is next week. These
+    are work sessions, so say so: prep for exams, work on everything else.
     """
-    if getattr(task, "work_type", "coursework") == "teaching":
-        return COLOR_TEACHING
-    if _is_priority_course(task, cfg):
-        return COLOR_PRIORITY
-    days_out = (due_local - dt.datetime.now().astimezone()).total_seconds() / 86400
-    if days_out <= 2:
-        return COLOR_CRITICAL
-    if days_out <= 5:
-        return COLOR_SOON
-    if days_out <= 14:
-        return COLOR_UPCOMING
-    return COLOR_LATER
+    title = task.title or "Task"
+    low = title.lower()
+    if any(k in low for k in ("exam", "midterm", "final", "quiz", "test")):
+        verb = "Prep"
+    elif any(k in low for k in ("read", "chapter", "textbook")):
+        verb = "Read"
+    else:
+        verb = "Work on"
+    return f"{verb}: {title}"
+
+
+def _pick_color(task, cfg, due_local: dt.datetime) -> str:
+    """Colour each block by COURSE, so Google Calendar groups visually the
+    same way the web page does.
+
+    Assignment is by hash of the course name, so a course added in Canvas
+    later picks up a colour on its own — nothing to configure. Urgency is
+    still legible from where the block sits relative to the deadline, and
+    from the DUE markers on the page.
+    """
+    course = (task.course or "").strip()
+    if not course:
+        return COLOR_LATER
+    h = 0
+    for ch in course:
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    return COURSE_COLOR_IDS[h % len(COURSE_COLOR_IDS)]
 
 
 def _consent_prompt() -> bool:
@@ -328,7 +363,7 @@ def _place_blocks(service, cal_id, tasks_sorted, cfg) -> list[dict]:
             start = block_cursor
             end = start + dt.timedelta(hours=chunk)
             service.events().insert(calendarId=cal_id, body={
-                "summary": f"Work: {task.title} ({task.course})",
+                "summary": _block_title(task),
                 "description": (
                     f"Auto-scheduled by Taskmaster. Rank {task.priority_score}. "
                     f"Due {due_local:%a %b %d %I:%M %p}."
@@ -381,7 +416,7 @@ def rebuild_calendar_and_brief():
     # project milestones). Canvas wins on conflicts since it's authoritative.
     seen = {_dedupe_key(t) for t in canvas_tasks}
     from_syllabus = []
-    for t in syllabus_tasks():
+    for t in list(syllabus_tasks()) + list(site_tasks()):
         k = _dedupe_key(t)
         if k not in seen:
             seen.add(k)
@@ -454,9 +489,7 @@ def print_briefing(briefing, skipped, cfg) -> None:
             print(f"    - {s}")
     if cfg.get("non_canvas_courses"):
         print(f"\n  Check manually (not on Canvas): {cfg['non_canvas_courses']}")
-    print("\n  Calendar colors:  RED = due <2 days   ORANGE = <5 days   "
-          "YELLOW = <2 weeks\n                    GREEN = later      "
-          "PURPLE = priority course")
+    print("\n  Calendar: each course has its own colour, matching the web page.")
     print("  Markers: * = priority course   S = from syllabus   T = teaching work (you TA/tutor)")
     print("=" * 78 + "\n")
 
